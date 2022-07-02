@@ -1,0 +1,107 @@
+*{
+    font-family: "Esteban", Georgia, "Times New Roman", Times, serif;
+    font-size:32px;
+    color:#ccc;
+}
+
+button{
+    color: black;
+}
+
+#app{
+    background: pink;
+}
+
+$names: "fading", "banana", "orange", "pear", "grape";
+
+@keyframes fading {
+    from {
+        opacity: 0.2;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes banana {
+    from {
+        left: -20px;
+    }
+    to {
+        left: 0;
+    }
+}
+
+@keyframes orange {
+    from {
+        opacity: 0.2;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes pear {
+    from {
+        opacity: 0.2;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes grape {
+    from {
+        opacity: 0.2;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@function dec-to-bin($d) {
+    $result: ();
+    $rest: $d;
+    @while $rest > 0 {
+        $result: append($result, $rest % 2);
+        $rest: floor($rest * 0.5);
+    }
+    @return $result;
+}
+
+@for $i from 1 through 20 {
+    $d:dec-to-bin($i);
+    $classNames:".animate";
+    $animations:"";
+    @for $j from 1 through length($d) {
+        @if nth($d, $j) == 1 {
+            $classNames: $classNames + "." + nth($names, $j);
+            $animations: $animations + nth($names, $j) + " 1s linear 0s 1 normal forwards,";
+        }
+    }
+
+    $animations: str-slice($animations, 0, str-length($animations) - 1);
+
+    div#{$classNames}{
+        animation: #{$animations};
+    }
+}
+
+::-webkit-scrollbar {
+    width: 12px;
+}
+
+::-webkit-scrollbar-track {
+    -webkit-box-shadow: none;
+    background: transparent;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    border-radius: 10px;
+    background: rgba(150,150,150, 0.25);
+    -webkit-box-shadow: none;
+    &:hover{
+        background: rgba(150,150,150, 0.666);
+    }
+}
