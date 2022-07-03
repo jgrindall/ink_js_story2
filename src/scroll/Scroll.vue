@@ -1,6 +1,9 @@
 <template>
+
+    <textarea>{{divs}}</textarea>
+
     <div ref="wrapperRef" class="wrapper">
-        <div v-for="item in items" key="id" :ref="(el: HTMLElement) => { addChild(item, el) }">
+        <div v-for="item in items" key="id" :ref="(el: HTMLElement) => { addChild(item, el) }" :class="getClass(item)">
             <slot :item="item"></slot>
         </div>
     </div>
@@ -14,6 +17,7 @@
     import type {Item} from "../ink/types";
     import {isContainedIn} from "../ink/Layout";
     import type { Ref, PropType  } from 'vue'
+    import { debounce } from 'underscore';
 
     const wrapperRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
 
@@ -25,7 +29,8 @@
         el:HTMLElement,
         visible: null | boolean,
         wasVisible: null | boolean,
-        showAt: null | number
+        showAt: null | number,
+        show: boolean
     };
 
     const divs:Ref< Record<string, Entry>> = ref({});
@@ -46,10 +51,13 @@
         console.log("raf");
          Object.keys(divs.value).forEach( (id:string) =>{
             const entry = divs.value[id];
-            if(entry.showAt){
-                
+            if(entry && entry.showAt && entry.showAt <= Date.now()){
+                entry.show = true;    
             }
          });
+        if(interval){
+            interval = requestAnimationFrame(repeatOften);
+        } 
     }
 
     const startCounting = ()=>{
@@ -68,10 +76,19 @@
                 el,
                 visible: null,
                 wasVisible: null,
-                showAt: null
+                showAt: null,
+                show: false
             }
         }
         update();
+    };
+
+    const getClass = (item:Item)=>{
+        let entry:Entry = divs.value[item.id] as Entry;
+        return {
+            "a": true,
+            "show": entry && entry.show
+        };
     };
 
     const stopCounting = ()=>{
@@ -83,7 +100,7 @@
         Object.keys(divs.value).forEach( (id:string) =>{
             const entry = divs.value[id];
             const vis = isElemVisible(entry.el);
-            if(vis === true && entry.visible !== true){
+            if(vis === true && entry.visible !== true && !entry.showAt && !entry.show){
                 newlyVisible.push(entry);
             }
             entry.visible = vis;
@@ -116,6 +133,8 @@
         observer.observe(el, {
             childList: true
         });
+        let observer2 = new ResizeObserver(update);
+        observer2.observe(el);
         update();
     });
 
@@ -136,6 +155,8 @@
        update();
     };
 
+    handleScroll = debounce(handleScroll, 500);
+
 </script>
 
 
@@ -148,6 +169,25 @@
         height:100%;
         left:0px;
         overflow-y: auto;
+    }
+    .a{
+        opacity: 0;
+         -webkit-transition: opacity 0.5s ease-in-out;
+        transition: opacity 0.5s ease-in-out;
+        &.show{
+            opacity: 1;
+        }
+    }
+    textarea{
+        color: white;
+        position: fixed;
+        right: 100px;
+        top: 0;
+        height: 500px;
+        width:600px;
+        background: orange;
+        z-index: 100000000;
+        font-size: 13px;
     }
 </style>
 

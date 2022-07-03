@@ -1,6 +1,6 @@
 <template>
     <scroll v-slot="{ item }" :items="items">
-        <component :is="getComponent()" :item="item"></component>
+        <component :is="getComponent()" :item="item" @divert="divert"></component>
     </scroll>
 </template>
 
@@ -13,6 +13,15 @@
     const getComponent = () => {
         return Child;
     }
+
+    const divert = ()=>{
+        const r = Math.ceil(Math.random() * 1000) + 1000;
+        items.value.push({
+            id:"" + r,
+            name:"something" + r,
+            email:"1"
+        });
+    };
 
     const items = ref([
         {
@@ -35,6 +44,26 @@
             name:"something4",
             email:"1"
         },
+        {
+            id:"5",
+            name:"something5",
+            email:"1"
+        },
+        {
+            id:"6",
+            name:"something6",
+            email:"1"
+        },
+        {
+            id:"7",
+            name:"something7",
+            email:"1"
+        },
+        {
+            id:"8",
+            name:"something8",
+            email:"1"
+        }
     ]);
 
 </script>

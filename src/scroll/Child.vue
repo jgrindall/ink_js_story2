@@ -1,5 +1,5 @@
 <template>
-    <div class="child" :ref="(el) => el" :id="item.id">
+    <div class="child" :ref="(el) => el" :id="item.id" @click="emit('divert')">
         <div class="block">
             <div>
                 <a :href="`/contacts/${item.id}`">
@@ -31,6 +31,8 @@
     });
 
     defineExpose({ element, info })
+
+    const emit = defineEmits(['divert'])
 
 
 
