@@ -1,161 +1,160 @@
 <template>
 
-    <textarea>{{divs}}</textarea>
-
     <div ref="wrapperRef" class="wrapper">
-        <div v-for="item in items" key="id" :ref="(el: HTMLElement) => { addChild(item, el) }" :class="getClass(item)">
+        <div
+            v-for="item in items"
+            key="id"
+            :ref="(el: HTMLElement) => addChild(item, el)"
+            :class="getClass(item)"
+        >    
             <slot :item="item"></slot>
         </div>
     </div>
 </template>
 
+<script lang="ts">
+    type Entry = {
+        el:HTMLElement,
+        showAt: null | number,
+        show: boolean,
+        id: number
+    };
+</script>
+
 <script lang="ts" setup>
 
-    //https://stackblitz.com/edit/vue3-scoped-slots?file=src%2Fcomponents%2FList.vue
-
-    import { ref, onMounted, onBeforeUnmount, watch } from 'vue'
-    import type {Item} from "../ink/types";
+    import { ref, onMounted, onBeforeUnmount } from 'vue'
     import {isContainedIn} from "../ink/Layout";
     import type { Ref, PropType  } from 'vue'
     import { debounce } from 'underscore';
+    import type {ItemInt} from "../ink/types";
+    import easyScroll from 'easy-scroll';
 
     const wrapperRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
+    const _data:Ref< Record<string, Entry>> = ref({});
+    const scrollingActive: Ref<Boolean> = ref(false);
+    let interval:number;
 
-    let interval:any;
-
-    let raf:any;
-
-    type Entry = {
-        el:HTMLElement,
-        visible: null | boolean,
-        wasVisible: null | boolean,
-        showAt: null | number,
-        show: boolean
-    };
-
-    const divs:Ref< Record<string, Entry>> = ref({});
-
-    const getInfo = (id:string)=>{
-        const entry = divs.value[id];
-        return "info " + (entry ? entry.visible : "nope");
-    };
-
-    const props = defineProps({
+    defineProps({
        items:  {
-          type: Object as PropType<Item[]>,
+          type: Object as PropType<ItemInt[]>,
           required: true
        }
     });
+
+    const getEntry = (id:number):Entry => {
+        return _data.value[id] as Entry;
+    };
     
-    const repeatOften = () => {
-        console.log("raf");
-         Object.keys(divs.value).forEach( (id:string) =>{
-            const entry = divs.value[id];
-            if(entry && entry.showAt && entry.showAt <= Date.now()){
-                entry.show = true;    
-            }
-         });
+    const updateVisibility = () => {
+        Object.values(_data.value).forEach((entry:Entry)=>{
+            entry.show = !!(entry.showAt && entry.showAt <= Date.now());
+        })
         if(interval){
-            interval = requestAnimationFrame(repeatOften);
+            interval = requestAnimationFrame(updateVisibility);
         } 
     }
 
-    const startCounting = ()=>{
-        interval = requestAnimationFrame(repeatOften);
-    };
-
-    const addChild = (item:Item, el: HTMLElement)=>{
-        console.log('addChild', item, el);
-        const now = Date.now();
-        let entry:Entry = divs.value[item.id] as Entry;
-        if(entry){
-            
-        }
-        else{
-            divs.value[item.id] = {
+    const addChild = (item:ItemInt, el: HTMLElement)=>{
+        let entry:Entry = getEntry(item.id);
+        if(!entry){
+            _data.value[item.id] = {
                 el,
-                visible: null,
-                wasVisible: null,
                 showAt: null,
-                show: false
+                show: false,
+                id:item.id
             }
+            setTimeout(()=>{
+                scrollTo(el);
+            })
         }
         update();
     };
 
-    const getClass = (item:Item)=>{
-        let entry:Entry = divs.value[item.id] as Entry;
+    const scrollTo = (el: HTMLElement)=>{
+        const top = el.offsetTop;
+        let domEl = wrapperRef?.value as HTMLElement;
+        if(scrollingActive.value || !domEl){
+            return;
+        }
+        scrollingActive.value = true;
+        easyScroll({
+            'scrollableDomEle':domEl,
+            'direction': 'bottom',
+            'duration':2500,
+            'easingPreset': 'easeInQuad',
+            'scrollAmount': top,
+            'onAnimationCompleteCallback': ()=>{
+                scrollingActive.value = false;
+            }
+        });
+    };
+
+    const getClass = (item:ItemInt)=>{
+        let entry:Entry = getEntry(item.id);
         return {
             "a": true,
             "show": entry && entry.show
         };
     };
 
-    const stopCounting = ()=>{
-        cancelAnimationFrame(interval);
-    };
-
     const update = ()=>{
-        const newlyVisible:Entry[] = [];
-        Object.keys(divs.value).forEach( (id:string) =>{
-            const entry = divs.value[id];
-            const vis = isElemVisible(entry.el);
-            if(vis === true && entry.visible !== true && !entry.showAt && !entry.show){
-                newlyVisible.push(entry);
+        if(scrollingActive.value){
+            return;
+        }
+        const show:number[] = [];
+        const additional:number[] = [];
+        Object.values(_data.value).forEach( (entry:Entry) =>{
+            if(isElemVisible(entry.el) && !entry.showAt && !entry.show){
+                show.push(entry.id);
             }
-            entry.visible = vis;
-            entry.wasVisible = entry.wasVisible || vis; // wasVisible never becomes false
         });
-        console.log(newlyVisible);
-        newlyVisible.forEach( (entry:Entry, i:number) =>{
-            entry.showAt = Date.now() + 1000*i; 
-        });
+        if(show.length >= 1){
+            Object.values(_data.value).forEach( (entry:Entry) =>{
+                if(entry.id < show[0] && !entry.showAt && !entry.show && !show.includes(entry.id) && !additional.includes(entry.id)){
+                    additional.push(entry.id);
+                } 
+            });
+            additional.forEach( (id:number) =>{
+                const entry:Entry = getEntry(id);
+                entry.showAt = Date.now(); 
+            });
+            show.forEach( (id:number, i:number) =>{
+                const entry:Entry = getEntry(id);
+                entry.showAt = Date.now() + 500*i; 
+            });
+        }
     };
 
-    const onChildren = (mutations : {type:string}[])=>{
-        let childList = false;
-        for (let mutation of mutations) {
-            if (mutation.type === 'childList') {
-                console.log('Mutation Detected: A child node has been added or removed.');
-                childList = true;
-            }
+    let onChildren = debounce((mutations : MutationRecord[])=>{
+        if(mutations.find(m=>m.type === "childList")){
+            setTimeout(update);
         }
-        if(childList){
-            update();
-        }
-    };
+    }, 500);
 
     onMounted(()=>{
         let el = wrapperRef?.value as HTMLElement;
         el.addEventListener("scroll", handleScroll);
-        startCounting();
         let observer = new MutationObserver(onChildren);
         observer.observe(el, {
             childList: true
         });
         let observer2 = new ResizeObserver(update);
         observer2.observe(el);
-        update();
+        interval = requestAnimationFrame(updateVisibility);
+        setTimeout(update);
     });
 
     onBeforeUnmount(() => {
         wrapperRef?.value?.removeEventListener("scroll", handleScroll);
-        stopCounting();
+        cancelAnimationFrame(interval);
     });
 
     const isElemVisible = (el: HTMLElement): boolean => {
         return wrapperRef.value ? isContainedIn(wrapperRef.value as HTMLElement)(el) : false;
     };
 
-    let updateVis = ()=>{
-      
-    };
-
-    let handleScroll = () => {
-       update();
-    };
-
-    handleScroll = debounce(handleScroll, 500);
+    let handleScroll = debounce(update, 500);
 
 </script>
 
@@ -181,13 +180,14 @@
     textarea{
         color: white;
         position: fixed;
-        right: 100px;
+        right: 50px;
         top: 0;
         height: 500px;
-        width:600px;
+        width:300px;
         background: orange;
         z-index: 100000000;
         font-size: 13px;
+        font-family: monospace;
     }
 </style>
 

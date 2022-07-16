@@ -60,7 +60,11 @@ export type V = {
 
 
 export type Item = {
-    id:string,
+    id:number,
     name:string,
     email:string
+}
+
+export interface ItemInt{
+    id:number
 }
