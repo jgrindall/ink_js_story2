@@ -1,29 +1,14 @@
 import {Story} from "inkjs";
 import {EventEmitter} from "@billjs/event-emitter";
-import type {Choice, Paragraph, ParagraphContent, StoryData, Tags} from "./types";
-import {merge} from "./Utils";
+import type {Choice, Paragraph, ParagraphContent, StoryData, Tags} from "../types/types";
+import {merge, id, count} from "./Utils";
 import {last} from "underscore";
-
-const _s = new Story({"inkVersion":20,"root":[[["done",{"#f":5,"#n":"g-0"}],null],"done",{"#f":1}],"listDefs":{}});
-
-type C = typeof _s.currentChoices[0];
 
 const choiceSeparator = "%choice%";
 
 const tagsToJSON = (tags: string[] | null)=>{
     const tagsArray:Tags[] = (tags || []).map((s: string) => JSON.parse(s) as Tags);
     return merge(tagsArray);
-};
-
-let _id = 0;
-
-const id = ()=>{
-    _id++;
-    return "" + _id;
-};
-
-const count = (s:string, needle:string) => {
-    return s.split(needle).length - 1;
 };
 
 const replace = (p:Paragraph, choices:any[]): boolean => {
@@ -56,21 +41,21 @@ const replace = (p:Paragraph, choices:any[]): boolean => {
     return true;
 };
 
+
 //BindExternalFunctin
 //ObserveVariable
 //https://klaudiabronowicka.com/blog/2020-12-15-making-a-visual-novel-with-unity-4-5-variables-and-state-management/
 
 export class StoryManager extends EventEmitter {
 
-    private story: typeof _s;
-    
+    private story: InstanceType<typeof Story>;
+
     constructor(content: Object){
         super();
         this.story = new Story(content);
-
-       this.story.onChoosePathString = (arg1: string, arg2: any[])=>{
+        this.story.onChoosePathString = (arg1: string, arg2: any[])=>{
            console.log('onChoosePathString', arg1, arg2);
-       };
+        };
         this.story.onMakeChoice = (arg1: C)=>{
             console.log('onMakeChoice', arg1);
         };
@@ -86,14 +71,14 @@ export class StoryManager extends EventEmitter {
         this.story.ChoosePathString(knotName);
         this.continue();
     }
-    private getCurrentParagraph(index:number): Paragraph{
+    private getCurrentParagraph(): Paragraph{
         const text:string = (this.story.Continue() || "").trim();
         let contents:ParagraphContent[] = [];
         try{
             // try and parse JSON
             const parsed = JSON.parse(text);
             contents.push({
-                type:"image",
+                type:parsed.type,
                 value: parsed.image
             });
         }
@@ -109,18 +94,15 @@ export class StoryManager extends EventEmitter {
             tags: tagsToJSON(this.story.currentTags),
             status: "",
             type:"paragraph",
-            index,
             id: id()
         };
     }
-    private getContinueData(): StoryData{
+    private getContinueStoryData(): StoryData{
         const paragraphs: Paragraph[] = [];
-        let index = 0;
         while(this.story.canContinue){
             paragraphs.push({
-                ...this.getCurrentParagraph(index)
+                ...this.getCurrentParagraph()
             });
-            index ++;
         }
         const lastParagraph:Paragraph = last(paragraphs) as Paragraph;
         let currentChoices = this.story.currentChoices;
@@ -135,7 +117,15 @@ export class StoryManager extends EventEmitter {
             });
         }
         const variables = this.story.variablesState;
+        console.log("paragraphs", paragraphs);
+        const items = [
+            ...paragraphs,
+            ...choices
+        ];
+        console.log("items", items);
+        
         return {
+            items,
             paragraphs,
             choices,
             variables
@@ -143,7 +133,7 @@ export class StoryManager extends EventEmitter {
     }
     public continue(){
         if(this.story.canContinue){
-            this.fire("data", this.getContinueData());
+            this.fire("data", this.getContinueStoryData());
         }
     }
     public setVariable(varName:string, value: any){

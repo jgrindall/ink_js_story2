@@ -2,9 +2,7 @@
 
    <div class="choice" :class="additionalClasses" ref="element">
       <p>
-         {{entry.id}} {{visible}}
-
-         Choice: {{entry.text}} {{visible}}
+         Choice: {{entry.text}}
       </p>
    </div>
 
@@ -19,10 +17,6 @@
     const props = defineProps({
        entry:  {
           type: Object as PropType<Choice>,
-          required: true
-       },
-       visible:{
-          type: Boolean,
           required: true
        }
     });

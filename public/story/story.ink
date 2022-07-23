@@ -4,13 +4,17 @@ VAR name = "John"
 
 == start ==
 
-\{"image": "a.png"\}
+#{"effects": ["slide-left"] }
 
-One day something happened
+\{type:"image", "image": "a.png"\}
 
-One day something happened
+One day something happened1
 
-One day something happened
+One day something happened2
+
+#{"effects": ["expand"] }
+
+One day something happened3
 
 This is an inline choice %choice% you can click it
 

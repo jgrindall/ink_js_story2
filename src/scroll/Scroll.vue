@@ -3,9 +3,10 @@
     <div ref="wrapperRef" class="wrapper">
         <div
             v-for="item in items"
+            :data-visibleTimestamp="getEntry(item.id)?.visibleTimestamp"
             key="id"
             :ref="(el: HTMLElement) => addChild(item, el)"
-            :class="getClass(item)"
+            :class="{'visible': getEntry(item.id)?.visible}"
         >    
             <slot :item="item"></slot>
         </div>
@@ -15,117 +16,136 @@
 <script lang="ts">
     type Entry = {
         el:HTMLElement,
-        showAt: null | number,
-        show: boolean,
-        id: number
+        visibleTimestamp: null | number, // time at which it should show
+        visible: boolean, // is it shown?
+        id: number // required
     };
 </script>
 
 <script lang="ts" setup>
 
     import { ref, onMounted, onBeforeUnmount } from 'vue'
-    import {isContainedIn} from "../ink/Layout";
+    import {isContainedIn} from "../ink/Utils";
     import type { Ref, PropType  } from 'vue'
     import { debounce } from 'underscore';
-    import type {ItemInt} from "../ink/types";
+    import type {HasId} from "../types/types";
     import easyScroll from 'easy-scroll';
 
     const wrapperRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
-    const _data:Ref< Record<string, Entry>> = ref({});
+    const mapIdToEntry:Ref< Record<string, Entry>> = ref({});
     const scrollingActive: Ref<Boolean> = ref(false);
     let interval:number;
 
-    defineProps({
+    const props = defineProps({
        items:  {
-          type: Object as PropType<ItemInt[]>,
+           // list of items
+          type: Object as PropType<HasId[]>,
           required: true
+       },
+       speed:{
+           // how fast elements appear (one by one)
+           type:Number,
+           required: false,
+           default:2000
        }
     });
 
-    const getEntry = (id:number):Entry => {
-        return _data.value[id] as Entry;
-    };
+    const getEntry = (id:number):Entry => mapIdToEntry.value[id];
     
+
+    /**
+     * update the value of visible on each entry
+     */
     const updateVisibility = () => {
-        Object.values(_data.value).forEach((entry:Entry)=>{
-            entry.show = !!(entry.showAt && entry.showAt <= Date.now());
+        const now = Date.now();
+        Object.values(mapIdToEntry.value).forEach((entry:Entry)=>{
+            if(!entry.visible){
+                entry.visible = !!(entry.visibleTimestamp && entry.visibleTimestamp <= now);
+                if(entry.visible){
+                    console.log("VISIBLE");
+                }
+            }
         })
         if(interval){
             interval = requestAnimationFrame(updateVisibility);
         } 
     }
 
-    const addChild = (item:ItemInt, el: HTMLElement)=>{
+    /**
+     * When a child is added, setup an entry to manage it
+     * @param item
+     * @param el 
+     */
+    const addChild = (item:HasId, el: HTMLElement)=>{
         let entry:Entry = getEntry(item.id);
         if(!entry){
-            _data.value[item.id] = {
+            mapIdToEntry.value[item.id] = {
                 el,
-                showAt: null,
-                show: false,
+                visibleTimestamp: null,
+                visible: false,
                 id:item.id
             }
-            setTimeout(()=>{
-                scrollTo(el);
-            })
         }
         update();
     };
 
+    /**
+     * Scroll to a specific element
+     * @param el
+     */
     const scrollTo = (el: HTMLElement)=>{
         const top = el.offsetTop;
-        let domEl = wrapperRef?.value as HTMLElement;
-        if(scrollingActive.value || !domEl){
+        let wrapperEl = wrapperRef?.value as HTMLElement;
+        if(scrollingActive.value || !wrapperEl){
+            // already scrolling
             return;
         }
         scrollingActive.value = true;
         easyScroll({
-            'scrollableDomEle':domEl,
+            'scrollableDomEle':wrapperEl,
             'direction': 'bottom',
-            'duration':2500,
+            'duration':props.speed,
             'easingPreset': 'easeInQuad',
-            'scrollAmount': top,
+            'scrollAmount': top - wrapperEl.scrollTop,
             'onAnimationCompleteCallback': ()=>{
                 scrollingActive.value = false;
             }
         });
     };
 
-    const getClass = (item:ItemInt)=>{
-        let entry:Entry = getEntry(item.id);
-        return {
-            "a": true,
-            "show": entry && entry.show
-        };
-    };
-
     const update = ()=>{
+        const now = Date.now();
         if(scrollingActive.value){
             return;
         }
         const show:number[] = [];
         const additional:number[] = [];
-        Object.values(_data.value).forEach( (entry:Entry) =>{
-            if(isElemVisible(entry.el) && !entry.showAt && !entry.show){
+        Object.values(mapIdToEntry.value).forEach( (entry:Entry) =>{
+            if(isElemVisible(entry.el) && !entry.visibleTimestamp && !entry.visible){
                 show.push(entry.id);
             }
         });
         if(show.length >= 1){
-            Object.values(_data.value).forEach( (entry:Entry) =>{
-                if(entry.id < show[0] && !entry.showAt && !entry.show && !show.includes(entry.id) && !additional.includes(entry.id)){
+            Object.values(mapIdToEntry.value).forEach( (entry:Entry) =>{
+                if(entry.id < show[0] && !entry.visibleTimestamp && !entry.visible && !show.includes(entry.id) && !additional.includes(entry.id)){
                     additional.push(entry.id);
                 } 
             });
             additional.forEach( (id:number) =>{
                 const entry:Entry = getEntry(id);
-                entry.showAt = Date.now(); 
+                entry.visibleTimestamp = now; 
             });
             show.forEach( (id:number, i:number) =>{
                 const entry:Entry = getEntry(id);
-                entry.showAt = Date.now() + 500*i; 
+                entry.visibleTimestamp = now + (5000*i);
+                console.log(i, now, entry, entry.visibleTimestamp);
             });
         }
     };
 
+    /**
+     * when children appear, update the visibility
+     */
     let onChildren = debounce((mutations : MutationRecord[])=>{
         if(mutations.find(m=>m.type === "childList")){
             setTimeout(update);
@@ -135,26 +155,43 @@
     onMounted(()=>{
         let el = wrapperRef?.value as HTMLElement;
         el.addEventListener("scroll", handleScroll);
-        let observer = new MutationObserver(onChildren);
-        observer.observe(el, {
+        let mutationObserver = new MutationObserver(onChildren);
+        mutationObserver.observe(el, {
             childList: true
         });
-        let observer2 = new ResizeObserver(update);
-        observer2.observe(el);
+        let resizeObserver = new ResizeObserver(update);
+        resizeObserver.observe(el);
+        // begin updating each frame
         interval = requestAnimationFrame(updateVisibility);
         setTimeout(update);
     });
 
     onBeforeUnmount(() => {
+        // remove listeners
         wrapperRef?.value?.removeEventListener("scroll", handleScroll);
         cancelAnimationFrame(interval);
     });
 
+    /**
+     * Helper function
+     * @param el
+     */
     const isElemVisible = (el: HTMLElement): boolean => {
         return wrapperRef.value ? isContainedIn(wrapperRef.value as HTMLElement)(el) : false;
     };
 
-    let handleScroll = debounce(update, 500);
+    let handleScroll = debounce(update, props.speed);
+
+    /**
+     * Scroll to a specific id
+     * @param id 
+     */
+    const goto = (id:number)=>{
+        const entry = getEntry(id);
+        scrollTo(entry.el);
+    }
+
+    defineExpose({ goto })
 
 </script>
 
@@ -173,7 +210,7 @@
         opacity: 0;
          -webkit-transition: opacity 0.5s ease-in-out;
         transition: opacity 0.5s ease-in-out;
-        &.show{
+        &.visible{
             opacity: 1;
         }
     }

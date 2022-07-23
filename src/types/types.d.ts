@@ -1,6 +1,6 @@
 export type Choice = {
     text: string,
-    id:string,
+    id:number,
     type:"choice"
 }
 
@@ -27,11 +27,12 @@ export type ParagraphContent = ParagraphTextContent | ParagraphImageContent | Pa
 export type Paragraph = {
     tags: Tags,
     contents: ParagraphContent[],
-    id:string,
-    index:number,
+    id:number,
     status: string,
     type:"paragraph"
 }
+
+export type StorySection = Paragraph | Choice;
 
 export type StoryContinueEvent = {
     data:StoryData
@@ -43,21 +44,11 @@ export type Tags = Partial<{
 }>;
 
 export type StoryData = {
+    items:any[],
     paragraphs:Paragraph[],
     choices:Choice[],
     variables: any;
 };
-
-export interface HasId{
-    id: string
-}
-
-export type V = {
-    visible:boolean,
-    everVisible:boolean,
-    index:number
-};
-
 
 export type Item = {
     id:number,
@@ -65,6 +56,6 @@ export type Item = {
     email:string
 }
 
-export interface ItemInt{
+export interface HasId{
     id:number
 }

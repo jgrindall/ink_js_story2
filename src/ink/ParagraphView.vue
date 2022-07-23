@@ -1,9 +1,8 @@
 <template>
 
-    <div class="paragraph" :class="additionalClasses" ref="element" :style="additionalStyles">
-     <span style="font-family:monospace;font-size:12px;color:#888;">{{visible}}</span>
+    <div class="paragraph" :class="additionalClasses" ref="element">
         <div>
-            <div class="content" v-for="content in entry.contents">
+            <div class="content" v-for="content in item.contents">
                 <span class="text" v-if="content.type === 'text'">
                     {{ content.text }}
                 </span>
@@ -21,42 +20,29 @@
 
     import {  computed, ref } from 'vue';
     import type {PropType} from 'vue';
-    import type {V, Paragraph, ParagraphLinkContent} from "./types";
+    import type {V, Paragraph, ParagraphLinkContent} from "../types/types";
 
     const props = defineProps({
-        entry:  {
+        item:  {
             type: Object as PropType<Paragraph>,
             required: true
-        },
-        visible:{
-            type: Object as PropType<V>,
-            required: false
         }
     })
 
     const additionalClasses = computed((): string[]=>{
         //const classNames = props.paragraph.tags.classNames || [];
         let a = ["banana", "red"];
-        if(props.visible?.everVisible){
-            a = ["banana", "red"];
-        }
         return a;    
     });
 
-    const additionalStyles = computed(()=>{
-        return props.visible?.everVisible? {
-            "animation": `fading 1s linear ${(props.entry.index)}s 1 normal forwards`
-        } : {};
-    });
-
-    const emit = defineEmits(['seen', 'divert', 'disable']);
+    const emit = defineEmits(['divert', 'disable']);
 
     const element = ref<HTMLElement | null>(null);
 
     defineExpose({ element })
 
     const onClickContents = (content: ParagraphLinkContent)=>{
-        emit('disable', props.entry);
+        //emit('disable', props.entry);
         emit('divert', content.index);
     };
 

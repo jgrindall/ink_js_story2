@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import {StoryManager} from "./StoryManager";
-import type {Choice, Paragraph, StoryContinueEvent} from "./types";
+import type {Choice, Paragraph, StoryContinueEvent} from "../types/types";
 
 let storyManager: StoryManager;
 
@@ -9,7 +9,8 @@ type StoryState = {
     name:string,
     isAdmin:boolean,
     paragraphs: Paragraph[],
-    choices: Choice[]
+    choices: Choice[],
+    items: any[]
 }
 
 export const useStore = defineStore('Story', {
@@ -19,17 +20,13 @@ export const useStore = defineStore('Story', {
             name: 'Eduardo',
             isAdmin: true,
             paragraphs: [],
-            choices: []
+            choices: [],
+            items:[]
         }
     },
     getters: {
-        gCount(state){
-            return state.counter * 10
-        },
-        entries(state){
-            return [
-                ...state.paragraphs
-            ]
+        storyItems(state){
+            return state.items;
         }
     },
     actions:{
@@ -42,15 +39,17 @@ export const useStore = defineStore('Story', {
                     if(content){
                         storyManager = new StoryManager(content);
                         storyManager.on("data", (event:StoryContinueEvent)=>{
-                            const paragraphs = event.data.paragraphs
+                            const items = event.data.items;
 
-                            //console.log("P", paragraph);
+                            console.log(this.items, items);
 
-                            this.paragraphs = [
-                                ...this.paragraphs,
-                                ...paragraphs
+                            const _items = this.items || [];
+
+                            this.items = [
+                                ..._items,
+                                ...items
                             ];
-                            this.choices = event.data.choices;
+                            //this.choices = event.data.choices;
                             console.log(event.data.variables["name"]);
                         });
                         storyManager.continue();
