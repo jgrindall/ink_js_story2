@@ -3,15 +3,6 @@
         <CanvasView></CanvasView>
     </div>
 
-    <textarea style="position: fixed;
-    right: 0;
-    top: 0;
-    width: 500px;
-    height: 500px;
-    z-index: 1000;
-    font-size: 14px;
-    color: black;">{{items}}</textarea>
-
     <scroll
         v-slot="{ item: item }"
         :items="items"
@@ -62,20 +53,19 @@
     })
 
     const divert = (choiceIndex: number, entryId:number)=>{
-        debugger;
         storyStore.divert(choiceIndex);
         nextTick(()=>{
             setTimeout(()=>{
-                scroll.value.goto(entryId);
+                //scroll.value.goto(entryId);
             })
         })
     };    
 
 </script>
 
-<style>
-
-</style>
-
-
-    
+<style scoped lang="scss">
+    #canvas{
+        width:100%;
+        height: 100%;
+    }
+</style>    

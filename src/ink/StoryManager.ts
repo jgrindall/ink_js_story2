@@ -122,15 +122,17 @@ export class StoryManager extends EventEmitter {
                 };
             });
         }
-        const variables = this.story.variablesState;
-        const items = [
-            ...paragraphs,
-            ...choices
-        ];
         
+        console.log("items", paragraphs);
+        console.log("items", choices);
+        
+
         return {
-            items,
-            variables
+            items:[
+                ...paragraphs,
+                ...choices
+            ],
+            variables: this.story.variablesState
         };
     }
     public continue(){

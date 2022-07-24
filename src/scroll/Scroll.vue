@@ -82,6 +82,7 @@
                 visible: false,
                 id:item.id
             }
+            console.log('add', item.id);
         }
     };
 
@@ -100,11 +101,13 @@
         easyScroll({
             'scrollableDomEle':wrapperEl,
             'direction': 'bottom',
-            'duration':props.speed,
+            'duration':props.speed * 0.99,
             'easingPreset': 'easeInQuad',
             'scrollAmount': top - wrapperEl.scrollTop,
             'onAnimationCompleteCallback': ()=>{
-                scrollingActive.value = false;
+                setTimeout(()=>{
+                    scrollingActive.value = false;
+                });
             }
         });
     };
@@ -129,11 +132,14 @@
             entriesThatBecameVisible = uniq(entriesThatBecameVisible);
             previousEntriesToMakeVisible = difference(uniq(previousEntriesToMakeVisible), entriesThatBecameVisible);
 
-
             // elements 0-5 become visible immediately
+            console.log('previousEntriesToMakeVisible', previousEntriesToMakeVisible.map(e=>e.id));
             previousEntriesToMakeVisible.forEach(entry => entry.visibleTimestamp = now);
 
             // the elements that just became visible get staggered times
+
+            console.log('entriesThatBecameVisible', entriesThatBecameVisible.map(e=>e.id));
+
             entriesThatBecameVisible.forEach( (entry:Entry, i:number) =>{
                 entry.visibleTimestamp = now + props.speed*i;
             });

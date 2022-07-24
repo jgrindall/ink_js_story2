@@ -51,7 +51,7 @@
         opacity: 0.5;
         background: transparent;
         position: relative;
-        margin:8px;
+        margin-left:8px;
         .content{
             display: inline;
             background: rgba(100,100,250,0.2);

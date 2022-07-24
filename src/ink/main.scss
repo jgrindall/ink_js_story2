@@ -8,8 +8,15 @@ button{
     color: black;
 }
 
+body, html{
+    width:100%;
+    height: 100%;
+}
+
 #app{
     background: pink;
+    width:100%;
+    height: 100%;
 }
 
 $names: "fading", "banana", "orange", "pear", "grape";
