@@ -1,6 +1,6 @@
 import {Story} from "inkjs";
 import {EventEmitter} from "@billjs/event-emitter";
-import type {Choice, Paragraph, Image, ParagraphContent, StoryData, Tags} from "../types/types";
+import type {Choice, Paragraph, Image, Text, TextContent, StoryData, Tags} from "../types/types";
 import {merge, id, count} from "./Utils";
 import {last} from "underscore";
 
@@ -11,28 +11,27 @@ const tagsToJSON = (tags: string[] | null)=>{
     return merge(tagsArray);
 };
 
-const replace = (p:Paragraph, choices:any[]): boolean => {
-    const paragraphContent:ParagraphContent = last(p.contents) as ParagraphContent;
-    if(paragraphContent?.type !== "text" || paragraphContent.numChoices === 0){
+const replace = (text:Text, choices:any[]): boolean => {
+    const lastContent:TextContent = last(text.contents) as TextContent;
+    if(lastContent?.type !== "text" || lastContent.numChoices === 0){
         return false;
     }
-    else if(paragraphContent.numChoices != choices.length){
-        console.log(paragraphContent, choices);
+    else if(lastContent.numChoices != choices.length){
         throw new Error("choices mismatch");
     }
-    const content = paragraphContent.text.split(choiceSeparator);
-    p.contents.pop();
+    const content = lastContent.text.split(choiceSeparator);
+    text.contents.pop();
     content.forEach( (c, i)=>{
-        p.contents.push({
+        text.contents.push({
             type: "text",
             text: c,
             numChoices: 0
         });
         const choice = choices[i];
         if(choice){
-            p.contents.push({
+            text.contents.push({
                 type: "link",
-                index: i,
+                choiceIndex: i,
                 text: choice.text,
                 value:""
             });
@@ -114,7 +113,7 @@ export class StoryManager extends EventEmitter {
         * optionally we can specify that the choices should be inline in
         * the last paragraph rather than a list of separate choices
         */
-        if(lastParagraph && !replace(lastParagraph, currentChoices)){
+        if(!replace(lastParagraph as Text, currentChoices)){
             choices = currentChoices.map((choice: {text: string}) => {
                 return {
                     text: choice.text,

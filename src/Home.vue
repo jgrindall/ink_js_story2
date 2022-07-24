@@ -48,20 +48,25 @@
     const items = storyStoreRefs.storyItems;
     
     const getComponent = (item: HasId) => {
-        let bookItem =  (item as unknown) as StoryItem;
-        console.log(item, bookItem.type);
-        return bookItem.type === "text" ? TextView : (bookItem.type === "image" ? ImageView : ChoiceView);
+        let type = ((item as unknown) as StoryItem).type;
+        return type === "text"
+            ? TextView
+            : (type === "image"
+                ? ImageView
+                : ChoiceView
+            );
     }
 
     onMounted(()=>{
         storyStore.load();
     })
 
-    const divert = (id: number)=>{
-        //store2.divert(id);
+    const divert = (choiceIndex: number, entryId:number)=>{
+        debugger;
+        storyStore.divert(choiceIndex);
         nextTick(()=>{
             setTimeout(()=>{
-                scroll.value.goto(id);
+                scroll.value.goto(entryId);
             })
         })
     };    

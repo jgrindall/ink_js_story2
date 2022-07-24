@@ -40,24 +40,17 @@ export const useStore = defineStore('Story', {
                         storyManager = new StoryManager(content);
                         storyManager.on("data", (event:StoryContinueEvent)=>{
                             const items = event.data.items;
-
-                            console.log(this.items, items);
-
-                            const _items = this.items || [];
-
                             this.items = [
-                                ..._items,
+                                ...(this.items || []),
                                 ...items
                             ];
-                            //this.choices = event.data.choices;
-                            console.log(event.data.variables["name"]);
                         });
                         storyManager.continue();
                     }
                 });
         },
-        divert(index:number){
-            storyManager.chooseIndex(index);
+        divert(choiceIndex:number){
+            storyManager.chooseIndex(choiceIndex);
         },
         continue(){
             storyManager.continue();

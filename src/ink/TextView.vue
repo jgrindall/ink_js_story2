@@ -41,7 +41,7 @@
 
     const onClickContents = (content: TextLinkContent)=>{
         //emit('disable', props.entry);
-        emit('divert', content.index);
+        emit('divert', content.choiceIndex, props.item.id);
     };
 
 </script>

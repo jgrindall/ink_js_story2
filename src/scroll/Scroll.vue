@@ -195,7 +195,6 @@
 
 <style scoped lang="scss">
     .mm-scroll-wrapper{
-        background: #222;
         position: absolute;
         top:0;
         width:100%;

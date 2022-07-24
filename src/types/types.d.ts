@@ -12,7 +12,7 @@ export type TextPlainContent = {
 
 export type TextLinkContent = {
     value:string,
-    index:number,
+    choiceIndex:number,
     type: "link",
     text:string
 };
