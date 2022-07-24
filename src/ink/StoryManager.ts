@@ -114,9 +114,10 @@ export class StoryManager extends EventEmitter {
         * the last paragraph rather than a list of separate choices
         */
         if(!replace(lastParagraph as Text, currentChoices)){
-            choices = currentChoices.map((choice: {text: string}) => {
+            choices = currentChoices.map((choice: {text: string}, choiceIndex:number) => {
                 return {
-                    text: choice.text,
+                    text: choice.text || "choice",
+                    choiceIndex,
                     type: "choice",
                     id: id()
                 };

@@ -1,6 +1,7 @@
 export type Choice = {
     text: string,
     id:number,
+    choiceIndex:number,
     type:"choice"
 }
 

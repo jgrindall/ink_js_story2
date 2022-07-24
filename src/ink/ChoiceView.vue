@@ -1,8 +1,7 @@
 <template>
-
-   <div class="choice" :class="additionalClasses" ref="element">
+   <div class="choice" ref="element" @click="onClickContents">
       <p>
-         Choice: {{entry.text}}
+         Choice: {{item.text}}
       </p>
    </div>
 
@@ -10,33 +9,31 @@
 
 <script lang="ts" setup>
 
-    import {ref, computed } from 'vue';
+    import {ref } from 'vue';
     import type {PropType } from 'vue';
-    import type {Choice} from "./types";
+    import type {Choice} from "../types/types";
 
     const props = defineProps({
-       entry:  {
+       item:  {
           type: Object as PropType<Choice>,
           required: true
        }
     });
 
-    const additionalClasses = computed((): string[]=>{
-       //const classNames = props.choice.tags.classNames || [];
-       const a = ["animate", "fading", "banana", "red"];
-       return [
-          ...a
-       ];
-    });
-
     const element = ref<HTMLElement | null>(null);
     defineExpose({ element })
+   const emit = defineEmits(['divert', 'disable']);
+
+   const onClickContents = ()=>{
+        //emit('disable', props.entry);
+        emit('divert', props.item.choiceIndex, props.item.id);
+    };
+
 
 </script>
 
 <style lang="scss" scoped>
    .choice{
-      opacity: 0.1;
       position: relative;
       cursor: pointer;
       &:hover{
