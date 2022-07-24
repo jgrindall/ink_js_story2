@@ -1,4 +1,11 @@
-import { receiveMessageOnPort } from "worker_threads";
+interface Rect{
+    top:number,
+    left:number,
+    right:number,
+    width:number,
+    height:number,
+    bottom:number
+}
 
 const merge = <T>(arr:T[]) : T => {
     return arr.reduce((memo: T, current: T)=>{
@@ -9,7 +16,7 @@ const merge = <T>(arr:T[]) : T => {
     }, {} as T)
 };
 
-const isContained = (rect:DOMRect | undefined, containerRect: DOMRect | undefined): boolean => {
+const isContained = (rect:Rect | undefined, containerRect: Rect | undefined): boolean => {
     return !!(containerRect && rect && rect.top >= containerRect.top && rect.bottom <= containerRect.bottom);
 };
 
@@ -20,12 +27,33 @@ const isContainedIn = (container: HTMLElement)=>{
     };
 };
 
-const getOverlapPercent = (rect:DOMRect, containerRect: DOMRect): number => {
+const getOverlapPercent = (rect:Rect, containerRect: Rect, options :{x:boolean, y:boolean} = {x:false, y:true}): number => {
     const overlap = getOverlap(rect, containerRect);
-    return overlap ? 100 * overlap?.height / rect?.height : 0;
+    let numerator:number;
+    let denominator:number;
+    if(overlap){
+        if(options.x && options.y){
+            numerator = overlap.height * overlap.width;
+            denominator = rect.width * rect.height;
+        }
+        else if(options.x && !options.y){
+            numerator = overlap.width;
+            denominator = rect.width;
+        }
+        else {
+            numerator = overlap.height;
+            denominator = rect.height;
+        }
+        return 100*numerator/denominator;
+    }
+    return 0;
 }
 
-const getOverlap = (rectA:DOMRect, rectB: DOMRect): {width:number, height:number} | undefined => {
+const getOverlapPercentEl = (el:HTMLElement, container: HTMLElement):number =>{
+    return getOverlapPercent(el.getBoundingClientRect(), container.getBoundingClientRect());
+};
+
+const getOverlap = (rectA:Rect, rectB: Rect): {width:number, height:number} | undefined => {
     const x0 = Math.max(rectA.left, rectB.left);
     const x1 = Math.min(rectA.right, rectB.right);
     const y0 = Math.max(rectA.top, rectB.top);
@@ -54,6 +82,7 @@ export {
     isContained,
     isContainedIn,
     getOverlapPercent,
+    getOverlapPercentEl,
     getOverlap,
     merge,
     id,
