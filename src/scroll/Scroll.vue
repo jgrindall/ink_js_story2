@@ -26,7 +26,7 @@
 <script lang="ts" setup>
 
     import { ref, onMounted, onBeforeUnmount } from 'vue'
-    import {isContainedIn} from "../ink/Utils";
+    import {getOverlapPercentEl} from "../ink/Utils";
     import type { Ref, PropType  } from 'vue'
     import { debounce, difference, uniq } from 'underscore';
     import type {HasId} from "../types/types";
@@ -180,7 +180,7 @@
      * @param el
      */
     const isElemVisible = (el: HTMLElement): boolean => {
-        return wrapperRef.value ? isContainedIn(wrapperRef.value as HTMLElement)(el) : false;
+        return wrapperRef.value ? getOverlapPercentEl(el, wrapperRef.value as HTMLElement) >= 50: false;
     };
 
     let handleScroll = debounce(update, props.speed);
