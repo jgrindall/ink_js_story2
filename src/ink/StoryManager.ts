@@ -1,6 +1,6 @@
 import {Story} from "inkjs";
 import {EventEmitter} from "@billjs/event-emitter";
-import type {Choice, Paragraph, ParagraphContent, StoryData, Tags} from "../types/types";
+import type {Choice, Paragraph, Image, ParagraphContent, StoryData, Tags} from "../types/types";
 import {merge, id, count} from "./Utils";
 import {last} from "underscore";
 
@@ -73,29 +73,31 @@ export class StoryManager extends EventEmitter {
     }
     private getCurrentParagraph(): Paragraph{
         const text:string = (this.story.Continue() || "").trim();
-        let contents:ParagraphContent[] = [];
+        console.log("TEXT", text);
         try{
             // try and parse JSON
             const parsed = JSON.parse(text);
-            contents.push({
-                type:parsed.type,
-                value: parsed.image
-            });
+            console.log(parsed);
+            return {
+                type:"image",
+                src:parsed.src,
+                tags: tagsToJSON(this.story.currentTags),
+                id: id()
+            };
         }
         catch(e){
-            contents.push({
+            //fail, it is a normal ink element
+        }
+        return {
+            type:"text",
+            tags: tagsToJSON(this.story.currentTags),
+            contents:[{
                 type: "text",
                 text: text,
                 numChoices: count(text, choiceSeparator)
-            });
-        }
-        return {
-            contents,
-            tags: tagsToJSON(this.story.currentTags),
-            status: "",
-            type:"paragraph",
+            }],
             id: id()
-        };
+        }
     }
     private getContinueStoryData(): StoryData{
         const paragraphs: Paragraph[] = [];
@@ -107,8 +109,13 @@ export class StoryManager extends EventEmitter {
         const lastParagraph:Paragraph = last(paragraphs) as Paragraph;
         let currentChoices = this.story.currentChoices;
         let choices: Choice[] = [];
-        if(!replace(lastParagraph, currentChoices)){
-            choices = this.story.currentChoices.map((choice: {text: string}) => {
+        
+        /*
+        * optionally we can specify that the choices should be inline in
+        * the last paragraph rather than a list of separate choices
+        */
+        if(lastParagraph && !replace(lastParagraph, currentChoices)){
+            choices = currentChoices.map((choice: {text: string}) => {
                 return {
                     text: choice.text,
                     type: "choice",
@@ -117,17 +124,13 @@ export class StoryManager extends EventEmitter {
             });
         }
         const variables = this.story.variablesState;
-        console.log("paragraphs", paragraphs);
         const items = [
             ...paragraphs,
             ...choices
         ];
-        console.log("items", items);
         
         return {
             items,
-            paragraphs,
-            choices,
             variables
         };
     }

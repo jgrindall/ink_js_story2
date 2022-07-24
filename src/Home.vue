@@ -33,9 +33,11 @@
 
     import { nextTick, onMounted, ref } from 'vue';
     import Scroll from "./scroll/Scroll.vue";
-    import type { StorySection, HasId } from '@/types/types';
-    import ParagraphView from '@/ink/ParagraphView.vue';
+    import type { StoryItem, HasId } from '@/types/types';
+    import TextView from '@/ink/TextView.vue';
     import ChoiceView from '@/ink/ChoiceView.vue';
+    import ImageView from '@/ink/ImageView.vue';
+    import CanvasView from './ink/CanvasView.vue';
     import {useStore as useStoryStore} from '@/ink/Story';
     import { storeToRefs } from 'pinia'
     
@@ -46,8 +48,9 @@
     const items = storyStoreRefs.storyItems;
     
     const getComponent = (item: HasId) => {
-        let bookItem =  (item as unknown) as StorySection;
-        return bookItem.type === "paragraph" ? ParagraphView : ChoiceView;
+        let bookItem =  (item as unknown) as StoryItem;
+        console.log(item, bookItem.type);
+        return bookItem.type === "text" ? TextView : (bookItem.type === "image" ? ImageView : ChoiceView);
     }
 
     onMounted(()=>{

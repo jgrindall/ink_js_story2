@@ -6,7 +6,7 @@ VAR name = "John"
 
 #{"effects": ["slide-left"] }
 
-\{type:"image", "image": "a.png"\}
+\{"type":"image", "src": "a.png"\}
 
 One day something happened1
 

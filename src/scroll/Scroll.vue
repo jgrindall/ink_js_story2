@@ -1,13 +1,14 @@
 <template>
 
-    <div ref="wrapperRef" class="wrapper">
+    <div ref="wrapperRef" class="mm-scroll-wrapper">
         <div
             v-for="item in items"
-            :data-visibleTimestamp="getEntry(item.id)?.visibleTimestamp"
             key="id"
             :ref="(el: HTMLElement) => addChild(item, el)"
-            :class="{'visible': getEntry(item.id)?.visible}"
+            class="mm-scroll-item"
+            :class="{'mm-scroll-visible': getEntry(item.id)?.visible}"
         >    
+
             <slot :item="item"></slot>
         </div>
     </div>
@@ -27,7 +28,7 @@
     import { ref, onMounted, onBeforeUnmount } from 'vue'
     import {isContainedIn} from "../ink/Utils";
     import type { Ref, PropType  } from 'vue'
-    import { debounce } from 'underscore';
+    import { debounce, difference, uniq } from 'underscore';
     import type {HasId} from "../types/types";
     import easyScroll from 'easy-scroll';
 
@@ -46,12 +47,11 @@
            // how fast elements appear (one by one)
            type:Number,
            required: false,
-           default:2000
+           default:500
        }
     });
 
     const getEntry = (id:number):Entry => mapIdToEntry.value[id];
-    
 
     /**
      * update the value of visible on each entry
@@ -59,11 +59,8 @@
     const updateVisibility = () => {
         const now = Date.now();
         Object.values(mapIdToEntry.value).forEach((entry:Entry)=>{
-            if(!entry.visible){
-                entry.visible = !!(entry.visibleTimestamp && entry.visibleTimestamp <= now);
-                if(entry.visible){
-                    console.log("VISIBLE");
-                }
+            if(!entry.visible && entry.visibleTimestamp){
+                entry.visible = entry.visibleTimestamp <= now;
             }
         })
         if(interval){
@@ -86,7 +83,6 @@
                 id:item.id
             }
         }
-        update();
     };
 
     /**
@@ -114,31 +110,32 @@
     };
 
     const update = ()=>{
+        console.log("UPDATE")
         const now = Date.now();
         if(scrollingActive.value){
             return;
         }
-        const show:number[] = [];
-        const additional:number[] = [];
-        Object.values(mapIdToEntry.value).forEach( (entry:Entry) =>{
-            if(isElemVisible(entry.el) && !entry.visibleTimestamp && !entry.visible){
-                show.push(entry.id);
-            }
-        });
-        if(show.length >= 1){
-            Object.values(mapIdToEntry.value).forEach( (entry:Entry) =>{
-                if(entry.id < show[0] && !entry.visibleTimestamp && !entry.visible && !show.includes(entry.id) && !additional.includes(entry.id)){
-                    additional.push(entry.id);
-                } 
-            });
-            additional.forEach( (id:number) =>{
-                const entry:Entry = getEntry(id);
-                entry.visibleTimestamp = now; 
-            });
-            show.forEach( (id:number, i:number) =>{
-                const entry:Entry = getEntry(id);
-                entry.visibleTimestamp = now + (5000*i);
-                console.log(i, now, entry, entry.visibleTimestamp);
+        const canAddTimestamp = (entry:Entry) => !entry.visibleTimestamp && !entry.visible;
+        
+        // entries that are visible now
+        let entriesThatBecameVisible = Object.values(mapIdToEntry.value)
+            .filter(entry => canAddTimestamp(entry) && isElemVisible(entry.el));
+        
+        if(entriesThatBecameVisible.length >= 1){
+            // if entry 6,7,8 are visible, we make visible elements 0,1,2,3,4,5 as well, so we do not leave gaps
+            let previousEntriesToMakeVisible = Object.values(mapIdToEntry.value)
+                .filter(entry => canAddTimestamp(entry) && entry.id < entriesThatBecameVisible[0].id);
+
+            entriesThatBecameVisible = uniq(entriesThatBecameVisible);
+            previousEntriesToMakeVisible = difference(uniq(previousEntriesToMakeVisible), entriesThatBecameVisible);
+
+
+            // elements 0-5 become visible immediately
+            previousEntriesToMakeVisible.forEach(entry => entry.visibleTimestamp = now);
+
+            // the elements that just became visible get staggered times
+            entriesThatBecameVisible.forEach( (entry:Entry, i:number) =>{
+                entry.visibleTimestamp = now + props.speed*i;
             });
         }
     };
@@ -197,21 +194,21 @@
 
 
 <style scoped lang="scss">
-    .wrapper{
+    .mm-scroll-wrapper{
         background: #222;
         position: absolute;
-        top:0px;
+        top:0;
         width:100%;
         height:100%;
-        left:0px;
+        left:0;
         overflow-y: auto;
-    }
-    .a{
-        opacity: 0;
-         -webkit-transition: opacity 0.5s ease-in-out;
-        transition: opacity 0.5s ease-in-out;
-        &.visible{
-            opacity: 1;
+        .mm-scroll-item{
+            opacity: 0;
+            -webkit-transition: opacity 0.5s ease-in-out;
+            transition: opacity 0.5s ease-in-out;
+            &.mm-scroll-visible{
+                opacity: 1;
+            }
         }
     }
     textarea{

@@ -4,35 +4,38 @@ export type Choice = {
     type:"choice"
 }
 
-export type ParagraphTextContent = {
+export type TextPlainContent = {
     numChoices: number,
     text:string,
     type: "text"
 };
 
-export type ParagraphImageContent = {
-    value:string,
-    type: "image"
-};
-
-export type ParagraphLinkContent = {
+export type TextLinkContent = {
     value:string,
     index:number,
     type: "link",
     text:string
 };
 
-export type ParagraphContent = ParagraphTextContent | ParagraphImageContent | ParagraphLinkContent;
+export type TextContent = TextLinkContent | TextPlainContent;
 
-export type Paragraph = {
+export type Text = {
     tags: Tags,
-    contents: ParagraphContent[],
+    contents: TextContent[],
     id:number,
-    status: string,
-    type:"paragraph"
+    type:"text"
 }
 
-export type StorySection = Paragraph | Choice;
+export type Image = {
+    type:"image",
+    id:number,
+    tags:Tags,
+    src:string
+};
+
+export type Paragraph = Text | Image;
+
+export type StoryItem = Paragraph | Choice;
 
 export type StoryContinueEvent = {
     data:StoryData
@@ -44,9 +47,7 @@ export type Tags = Partial<{
 }>;
 
 export type StoryData = {
-    items:any[],
-    paragraphs:Paragraph[],
-    choices:Choice[],
+    items:StoryItem[],
     variables: any;
 };
 
