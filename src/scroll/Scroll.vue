@@ -28,7 +28,7 @@
     import { ref, onMounted, onBeforeUnmount } from 'vue'
     import {getOverlapPercentEl} from "../ink/Utils";
     import type { Ref, PropType  } from 'vue'
-    import { debounce, difference, uniq } from 'underscore';
+    import { debounce, difference, uniq, max, pluck, compact } from 'underscore';
     import type {HasId} from "../types/types";
     import easyScroll from 'easy-scroll';
 
@@ -113,8 +113,10 @@
     };
 
     const update = ()=>{
-        console.log("UPDATE")
-        const now = Date.now();
+        const startDates = compact(pluck(Object.values(mapIdToEntry.value), "visibleTimestamp"));
+        const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
+        let startDate = Math.max(Date.now(), maxStartDate);
+        
         if(scrollingActive.value){
             return;
         }
@@ -134,14 +136,14 @@
 
             // elements 0-5 become visible immediately
             console.log('previousEntriesToMakeVisible', previousEntriesToMakeVisible.map(e=>e.id));
-            previousEntriesToMakeVisible.forEach(entry => entry.visibleTimestamp = now);
+            previousEntriesToMakeVisible.forEach(entry => entry.visibleTimestamp = startDate);
 
             // the elements that just became visible get staggered times
 
             console.log('entriesThatBecameVisible', entriesThatBecameVisible.map(e=>e.id));
 
             entriesThatBecameVisible.forEach( (entry:Entry, i:number) =>{
-                entry.visibleTimestamp = now + props.speed*i;
+                entry.visibleTimestamp = startDate + props.speed*i;
             });
         }
     };
@@ -197,7 +199,6 @@
     defineExpose({ goto })
 
 </script>
-
 
 <style scoped lang="scss">
     .mm-scroll-wrapper{
