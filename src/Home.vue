@@ -56,7 +56,7 @@
         storyStore.divert(choiceIndex);
         nextTick(()=>{
             setTimeout(()=>{
-                //scroll.value.goto(entryId);
+                scroll.value.goto(entryId);
             })
         })
     };    
