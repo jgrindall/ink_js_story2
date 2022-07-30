@@ -1,10 +1,11 @@
 <template>
-   <div v-for="choice in item.choices" class="choice" ref="element" @click="onClickContents(choice)">
-      <p>
-         Choice: {{choice.text}} {{last}}
-      </p>
+   <div ref="element">
+      <div class="choice" v-for="choice in item.choices" @click="onClickContents(choice)">
+         <p>
+            Choice: {{choice.text}} {{last}}
+         </p>
+      </div>
    </div>
-
 </template>
 
 <script lang="ts" setup>
