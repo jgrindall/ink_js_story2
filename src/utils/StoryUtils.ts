@@ -1,7 +1,7 @@
 
 import {last} from "underscore";
 import {merge} from "./Utils";
-import type {Tags} from "@/types/types";
+import type {Tags, Text, TextContent} from "@/types/types";
 
 export const choiceSeparator = "%choice%";
 

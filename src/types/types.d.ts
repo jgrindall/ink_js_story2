@@ -1,8 +1,10 @@
-export type Choice = {
-    text: string,
+export type Choices = {
+    choices:{
+        text: string,
+        choiceIndex:number
+    }[]
     id:number,
-    choiceIndex:number,
-    type:"choice"
+    type:"choices"
 }
 
 export type TextPlainContent = {
@@ -36,7 +38,7 @@ export type Image = {
 
 export type Paragraph = Text | Image;
 
-export type StoryItem = Paragraph | Choice;
+export type StoryItem = Paragraph | Choices;
 
 export type StoryState = {
     items: StoryItem[]

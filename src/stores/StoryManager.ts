@@ -1,6 +1,6 @@
 import {Story} from "inkjs";
 import {EventEmitter} from "@billjs/event-emitter";
-import type {Choice, Paragraph, Text, StoryData} from "../types/types";
+import type {Choice, Paragraph, Text, StoryData, StoryItem} from "../types/types";
 import {id, count} from "../utils/Utils";
 import {last} from "underscore";
 import savedState from "../persistence/savedState.json";
@@ -86,6 +86,11 @@ export class StoryManager extends EventEmitter {
                 ...this.getCurrentParagraph()
             });
         }
+
+        let items:StoryItem[] = [
+            ...paragraphs
+        ];
+
         const lastParagraph:Paragraph = last(paragraphs) as Paragraph;
         let currentChoices = this.story.currentChoices;
         let choices: Choice[] = [];
@@ -94,22 +99,23 @@ export class StoryManager extends EventEmitter {
         * optionally we can specify that the choices should be inline in
         * the last paragraph rather than a list of separate choices
         */
-        if(!replace(lastParagraph as Text, currentChoices)){
+
+        if(lastParagraph && lastParagraph.type === "text" && !replace(lastParagraph, currentChoices)){
             choices = currentChoices.map((choice: {text: string}, choiceIndex:number) => {
                 return {
                     text: choice.text || "choice",
-                    choiceIndex,
-                    type: "choice",
-                    id: id()
+                    choiceIndex
                 };
+            });
+            items.push({
+                type:"choices",
+                id: id(),
+                choices
             });
         }
         
         return {
-            items:[
-                ...paragraphs,
-                ...choices
-            ],
+            items,
             variables: this.story.variablesState
         };
     }

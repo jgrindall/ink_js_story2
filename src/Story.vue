@@ -31,7 +31,7 @@
     import Scroll from "./scroll/Scroll.vue";
     import type { StoryItem, HasId } from '@/types/types';
     import TextView from '@/components/TextView.vue';
-    import ChoiceView from '@/components/ChoiceView.vue';
+    import ChoicesView from '@/components/ChoicesView.vue';
     import ImageView from '@/components/ImageView.vue';
     import CanvasView from '@/components/CanvasView.vue';
     import {useStore as useStoryStore} from '@/stores/Story';
@@ -44,14 +44,15 @@
 
     const items:Ref<StoryItem[]> = storyStoreRefs.storyItems;
     
-    const getComponent = (item: HasId) => {
+    const hash = {
+        "text": TextView,
+        "image": ImageView,
+        "choices": ChoicesView
+    };
+
+    const getComponent = (item: HasId): TextView | ImageView | ChoicesView => {
         let type = ((item as unknown) as StoryItem).type;
-        return type === "text"
-            ? TextView
-            : (type === "image"
-                ? ImageView
-                : ChoiceView
-            );
+        return hash[type];
     }
 
     onMounted(()=>{
