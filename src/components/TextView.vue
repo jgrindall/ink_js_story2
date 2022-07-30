@@ -48,7 +48,6 @@
 
 <style lang="scss" scoped>
     .text{
-        opacity: 0.5;
         background: transparent;
         position: relative;
         margin:10px;
