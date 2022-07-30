@@ -26,7 +26,7 @@
 <script lang="ts" setup>
 
     import { ref, onMounted, onBeforeUnmount } from 'vue'
-    import {getOverlapPercentEl} from "../ink/Utils";
+    import {getOverlapPercentEl} from "../utils/Utils";
     import type { Ref, PropType  } from 'vue'
     import { debounce, difference, uniq, max, pluck, compact } from 'underscore';
     import type {HasId} from "../types/types";
@@ -48,6 +48,12 @@
            type:Number,
            required: false,
            default:500
+       },
+       scrollSpeed:{
+           // how fast elements appear (one by one)
+           type:Number,
+           required: false,
+           default:1000
        }
     });
 
@@ -82,7 +88,6 @@
                 visible: false,
                 id:item.id
             }
-            console.log('add', item.id);
         }
     };
 
@@ -101,7 +106,7 @@
         easyScroll({
             'scrollableDomEle':wrapperEl,
             'direction': 'bottom',
-            'duration':props.speed * 0.99,
+            'duration':props.scrollSpeed,
             'easingPreset': 'easeInQuad',
             'scrollAmount': top - wrapperEl.scrollTop,
             'onAnimationCompleteCallback': ()=>{

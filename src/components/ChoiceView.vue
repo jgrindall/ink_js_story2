@@ -1,7 +1,7 @@
 <template>
    <div class="choice" ref="element" @click="onClickContents">
       <p>
-         Choice: {{item.text}}
+         Choice: {{item.text}} {{last}}
       </p>
    </div>
 
@@ -17,6 +17,10 @@
        item:  {
           type: Object as PropType<Choice>,
           required: true
+       },
+       last:{
+          type:Boolean,
+          required:false
        }
     });
 

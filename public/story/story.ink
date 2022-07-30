@@ -93,8 +93,7 @@ ffffffffffffff
 
 
 == a ==
-
-\{"image": "aaaaa.png"\}
+\{"type":"image", "src": "aaaa.png"\}
 
 This is a
 #{"delay": 3000}

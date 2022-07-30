@@ -1,31 +1,17 @@
 import { defineStore } from 'pinia'
 import {StoryManager} from "./StoryManager";
-import type {Choice, Paragraph, StoryContinueEvent} from "../types/types";
+import type {Choice, StoryItem, StoryContinueEvent, StoryState} from "../types/types";
 
 let storyManager: StoryManager;
-
-type StoryState = {
-    counter:number,
-    name:string,
-    isAdmin:boolean,
-    paragraphs: Paragraph[],
-    choices: Choice[],
-    items: any[]
-}
 
 export const useStore = defineStore('Story', {
     state: (): StoryState => {
         return {
-            counter: 0,
-            name: 'Eduardo',
-            isAdmin: true,
-            paragraphs: [],
-            choices: [],
             items:[]
         }
     },
     getters: {
-        storyItems(state){
+        storyItems(state):StoryItem[]{
             return state.items;
         }
     },
@@ -48,6 +34,12 @@ export const useStore = defineStore('Story', {
                         storyManager.continue();
                     }
                 });
+        },
+        getJSON(){
+            storyManager.getJSON();
+        },
+        loadJSON(){
+            storyManager.loadJSON();
         },
         divert(choiceIndex:number){
             storyManager.chooseIndex(choiceIndex);

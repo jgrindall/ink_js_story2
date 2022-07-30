@@ -38,6 +38,10 @@ export type Paragraph = Text | Image;
 
 export type StoryItem = Paragraph | Choice;
 
+export type StoryState = {
+    items: StoryItem[]
+}
+
 export type StoryContinueEvent = {
     data:StoryData
 };
