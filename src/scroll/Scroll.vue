@@ -4,14 +4,17 @@
         <div
             v-for="item in items"
             key="id"
-            :ref="(el: HTMLElement) => addChild(item, el)"
             class="mm-scroll-item"
-            :class="{'mm-scroll-visible': getEntry(item.id)?.visible}"
+            :id="item.id"
+            :class="{
+                'mm-scroll-visible': getEntry(item.id)?.visible,
+                'mm-scroll-visible2': getEntry(item.id)?.visible2
+            }"
         >    
-
             <slot :item="item"></slot>
         </div>
     </div>
+
 </template>
 
 <script lang="ts">
@@ -19,23 +22,27 @@
         el:HTMLElement,
         visibleTimestamp: null | number, // time at which it should show
         visible: boolean, // is it shown?
+        visibleTimestamp2: null | number, // time at which it should show
+        visible2: boolean, // is it shown?
         id: number // required
     };
 </script>
 
 <script lang="ts" setup>
 
-    import { ref, onMounted, onBeforeUnmount } from 'vue'
+    import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
     import {getOverlapPercentEl} from "../utils/Utils";
     import type { Ref, PropType  } from 'vue'
-    import { debounce, difference, uniq, max, pluck, compact } from 'underscore';
+    import { debounce, difference, uniq, max, compact } from 'underscore';
     import type {HasId} from "../types/types";
     import easyScroll from 'easy-scroll';
 
     const wrapperRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
-    const mapIdToEntry:Ref< Record<string, Entry>> = ref({});
+    const mapIdToEntry:Ref< Record<number, Entry>> = ref({});
     const scrollingActive: Ref<Boolean> = ref(false);
     let interval:number;
+    let mutationObserver: MutationObserver;
+    let resizeObserver: ResizeObserver;
 
     const props = defineProps({
        items:  {
@@ -50,10 +57,16 @@
            default:500
        },
        scrollSpeed:{
-           // how fast elements appear (one by one)
+           // how fast relevant elements scroll into view
            type:Number,
            required: false,
            default:1000
+       },
+       overlapPercent:{
+           // how to detect whether an element is visible or not
+           type:Number,
+           required: false,
+           default:33
        }
     });
 
@@ -68,28 +81,14 @@
             if(!entry.visible && entry.visibleTimestamp){
                 entry.visible = entry.visibleTimestamp <= now;
             }
+            if(!entry.visible2 && entry.visibleTimestamp2){
+                entry.visible2 = entry.visibleTimestamp2 <= now;
+            }
         })
         if(interval){
             interval = requestAnimationFrame(updateVisibility);
         } 
     }
-
-    /**
-     * When a child is added, setup an entry to manage it
-     * @param item
-     * @param el 
-     */
-    const addChild = (item:HasId, el: HTMLElement)=>{
-        let entry:Entry = getEntry(item.id);
-        if(!entry){
-            mapIdToEntry.value[item.id] = {
-                el,
-                visibleTimestamp: null,
-                visible: false,
-                id:item.id
-            }
-        }
-    };
 
     /**
      * Scroll to a specific element
@@ -118,58 +117,79 @@
     };
 
     const update = ()=>{
-        const startDates = compact(pluck(Object.values(mapIdToEntry.value), "visibleTimestamp"));
-        const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
-        let startDate = Math.max(Date.now(), maxStartDate);
-        
-        if(scrollingActive.value){
-            return;
-        }
-        const canAddTimestamp = (entry:Entry) => !entry.visibleTimestamp && !entry.visible;
-        
-        // entries that are visible now
-        let entriesThatBecameVisible = Object.values(mapIdToEntry.value)
-            .filter(entry => canAddTimestamp(entry) && isElemVisible(entry.el));
-        
-        if(entriesThatBecameVisible.length >= 1){
-            // if entry 6,7,8 are visible, we make visible elements 0,1,2,3,4,5 as well, so we do not leave gaps
-            let previousEntriesToMakeVisible = Object.values(mapIdToEntry.value)
-                .filter(entry => canAddTimestamp(entry) && entry.id < entriesThatBecameVisible[0].id);
 
-            entriesThatBecameVisible = uniq(entriesThatBecameVisible);
-            previousEntriesToMakeVisible = difference(uniq(previousEntriesToMakeVisible), entriesThatBecameVisible);
+        const updateUsing = (percent:number, t1:'visible' | 'visible2', t2: 'visibleTimestamp' | 'visibleTimestamp2')=>{
+            const startDates = compact(Object.values(mapIdToEntry.value).map(obj => obj[t2]));
+            const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
+            let startDate = Math.max(Date.now(), maxStartDate);
+            
+            const canAddTimestamp = (entry:Entry) => !entry[t2] && !entry[t1];
+            
+            // entries that are visible now
+            let entriesThatBecameVisible = Object.values(mapIdToEntry.value)
+                .filter(entry => canAddTimestamp(entry) && isElemVisible(entry.el, percent));
+            
+            if(entriesThatBecameVisible.length >= 1){
+                // if entry 6,7,8 are visible, we make visible elements 0,1,2,3,4,5 as well, so we do not leave gaps
+                let previousEntriesToMakeVisible = Object.values(mapIdToEntry.value)
+                    .filter(entry => canAddTimestamp(entry) && entry.id < entriesThatBecameVisible[0].id);
 
-            // elements 0-5 become visible immediately
-            console.log('previousEntriesToMakeVisible', previousEntriesToMakeVisible.map(e=>e.id));
-            previousEntriesToMakeVisible.forEach(entry => entry.visibleTimestamp = startDate);
+                entriesThatBecameVisible = uniq(entriesThatBecameVisible);
+                previousEntriesToMakeVisible = difference(uniq(previousEntriesToMakeVisible), entriesThatBecameVisible);
 
-            // the elements that just became visible get staggered times
+                // elements 0-5 become visible immediately
+                previousEntriesToMakeVisible.forEach(entry => entry[t2] = startDate);
 
-            console.log('entriesThatBecameVisible', entriesThatBecameVisible.map(e=>e.id));
+                // the elements that just became visible get staggered times
 
-            entriesThatBecameVisible.forEach( (entry:Entry, i:number) =>{
-                entry.visibleTimestamp = startDate + props.speed*i;
-            });
-        }
+                entriesThatBecameVisible.forEach( (entry:Entry, i:number) =>{
+                    entry[t2] = startDate + props.speed*i;
+                });
+            }
+        };
+
+        updateUsing(props.overlapPercent, "visible", "visibleTimestamp");
+        updateUsing(0.01, "visible2", "visibleTimestamp2");
     };
 
     /**
      * when children appear, update the visibility
      */
-    let onChildren = debounce((mutations : MutationRecord[])=>{
-        if(mutations.find(m=>m.type === "childList")){
-            setTimeout(update);
-        }
-    }, 500);
+    let onChildren = (mutations : MutationRecord[])=>{
+        const nodesAdded:HTMLElement[] = [];
+        mutations.forEach((mutation:MutationRecord)=>{
+            if(mutation.type === "childList"){
+                mutation.addedNodes.forEach((node:Node)=>{
+                    nodesAdded.push(node as HTMLElement);
+                });
+            }
+        });
+        nextTick(()=>{
+            nodesAdded.forEach((el:HTMLElement)=>{
+                const id:number = parseInt(el.id);
+                mapIdToEntry.value[id] = {
+                    el,
+                    visibleTimestamp: null,
+                    visible: false,
+                    visibleTimestamp2: null,
+                    visible2: false,
+                    id
+                }
+            });
+            update();
+        })
+    };
 
     onMounted(()=>{
         let el = wrapperRef?.value as HTMLElement;
         el.addEventListener("scroll", handleScroll);
-        let mutationObserver = new MutationObserver(onChildren);
+        mutationObserver = new MutationObserver(onChildren);
         mutationObserver.observe(el, {
-            childList: true
+            childList: true,
+            attributes:true,
+            subtree:true
         });
-        let resizeObserver = new ResizeObserver(update);
+        resizeObserver = new ResizeObserver(update);
         resizeObserver.observe(el);
         // begin updating each frame
         interval = requestAnimationFrame(updateVisibility);
@@ -180,21 +200,24 @@
         // remove listeners
         wrapperRef?.value?.removeEventListener("scroll", handleScroll);
         cancelAnimationFrame(interval);
+        mutationObserver.disconnect();
+        resizeObserver.disconnect();
     });
 
     /**
      * Helper function
      * @param el
      */
-    const isElemVisible = (el: HTMLElement): boolean => {
-        return wrapperRef.value ? getOverlapPercentEl(el, wrapperRef.value as HTMLElement) >= 50: false;
+    const isElemVisible = (el: HTMLElement, percent:number): boolean => {
+        const overlapPercent = wrapperRef.value ? getOverlapPercentEl(el, wrapperRef.value as HTMLElement) : 0;
+        return overlapPercent >= percent;
     };
 
     let handleScroll = debounce(update, props.speed);
 
     /**
      * Scroll to a specific id
-     * @param id 
+     * @param {number} id 
      */
     const goto = (id:number)=>{
         const entry = getEntry(id);
@@ -217,22 +240,13 @@
             opacity: 0;
             -webkit-transition: opacity 0.5s ease-in-out;
             transition: opacity 0.5s ease-in-out;
+            &.mm-scroll-visible2{
+                opacity: 0.1;
+            }
             &.mm-scroll-visible{
                 opacity: 1;
             }
         }
-    }
-    textarea{
-        color: white;
-        position: fixed;
-        right: 50px;
-        top: 0;
-        height: 500px;
-        width:300px;
-        background: orange;
-        z-index: 100000000;
-        font-size: 13px;
-        font-family: monospace;
     }
 </style>
 

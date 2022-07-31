@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import {StoryManager} from "./StoryManager";
-import type {Choice, StoryItem, StoryContinueEvent, StoryState} from "../types/types";
+import type {Choices, StoryItem, StoryContinueEvent, StoryState} from "../types/types";
 
 let storyManager: StoryManager;
 
@@ -26,9 +26,17 @@ export const useStore = defineStore('Story', {
                         storyManager = new StoryManager(content);
                         storyManager.on("data", (event:StoryContinueEvent)=>{
                             const items = event.data.items;
+
+                            console.log(this.items, items);
+
+                            const currentText = this.items.filter(e=>e.type !== "choices");
+                            const newText = items.filter(e=>e.type !== "choices");
+                            const newChoices = items.filter(e=>e.type === "choices");
+
                             this.items = [
-                                ...(this.items || []),
-                                ...items
+                                ...currentText,
+                                ...newText,
+                                ...newChoices
                             ];
                         });
                         storyManager.continue();
@@ -49,13 +57,6 @@ export const useStore = defineStore('Story', {
         },
         setVariable(varName:string, value: any){
             storyManager.setVariable(varName, value);
-        },
-        choose(choice: Choice){
-            const ids = this.choices.map( (c: Choice) =>c.id);
-            storyManager.chooseIndex(ids.indexOf(choice.id))
-        },
-        increment(){
-            this.counter++
         }
     }
 })

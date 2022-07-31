@@ -1,5 +1,5 @@
 <template>
-   <div ref="element">
+   <div class="choices">
       <div class="choice" v-for="choice in item.choices" @click="onClickContents(choice)">
          <p>
             Choice: {{choice.text}} {{last}}
@@ -25,30 +25,36 @@
       }
    });
 
-   const element = ref<HTMLElement | null>(null);
-   defineExpose({ element })
    const emit = defineEmits(['divert', 'disable']);
 
    const onClickContents = (choice:{choiceIndex:number})=>{
+      if(props.last){
          emit('divert', choice.choiceIndex, props.item.id);
+      }
    };
 
 
 </script>
 
 <style lang="scss" scoped>
-   .choice{
-      position: relative;
-      cursor: pointer;
-      &:hover{
-         p{
-            background: #222;
-         }
+   .choices{
+      &:not(.last){
+         display: none;
+         background-color: green;
       }
-      p{
-         background: #111;
-         margin:40px;
-         padding:40px;
+      .choice{
+         position: relative;
+         cursor: pointer;
+         &:hover{
+            p{
+               background: #222;
+            }
+         }
+         p{
+            background: #111;
+            margin:40px;
+            padding:40px;
+         }
       }
    }
 </style>

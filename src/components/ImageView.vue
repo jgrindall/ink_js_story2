@@ -1,5 +1,5 @@
 <template>
-    <div class="text" ref="element">
+    <div class="text">
         <img :src="'/images/' + item.src"/>
     </div>
 
@@ -17,10 +17,6 @@
             required: true
         }
     })
-
-    const element = ref<HTMLElement | null>(null);
-
-    defineExpose({ element })
 
 </script>
 

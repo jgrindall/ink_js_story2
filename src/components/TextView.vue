@@ -1,6 +1,5 @@
 <template>
-
-    <div class="text" ref="element">
+    <div class="text">
         <div class="content" v-for="content in item.contents">
             <span
                 class="text"
@@ -22,7 +21,6 @@
 
 <script lang="ts" setup>
 
-    import { ref } from 'vue';
     import type {PropType} from 'vue';
     import type {Text, TextLinkContent} from "../types/types";
 
@@ -30,18 +28,19 @@
         item:  {
             type: Object as PropType<Text>,
             required: true
+        },
+        last:{
+            type:Boolean,
+            required:false
         }
     })
 
-    const emit = defineEmits(['divert', 'disable']);
-
-    const element = ref<HTMLElement | null>(null);
-
-    defineExpose({ element })
+    const emit = defineEmits(['divert']);
 
     const onClickContents = (content: TextLinkContent)=>{
-        //emit('disable', props.entry);
-        emit('divert', content.choiceIndex, props.item.id);
+        if(props.last){
+            emit('divert', content.choiceIndex, props.item.id);
+        }
     };
 
 </script>
@@ -66,5 +65,12 @@
                 }
             }
         }
+        &:not(.last){
+        .button{
+            background-color: black !important;
+            pointer-events: none;
+            opacity: 0.2;
+        }
+    }
     }
 </style>

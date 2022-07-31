@@ -10,7 +10,9 @@
         >
         <component
             class="item"
+            :class="{'last': item === lastItem}"
             :is="getComponent(item)"
+            :id="item.id"
             :item="item"
             :last="item === lastItem"
             @divert="divert"
@@ -50,7 +52,7 @@
         "choices": ChoicesView
     };
 
-    const getComponent = (item: HasId): TextView | ImageView | ChoicesView => {
+    const getComponent = (item: HasId): typeof TextView | typeof ImageView | typeof ChoicesView => {
         let type = ((item as unknown) as StoryItem).type;
         return hash[type];
     }
