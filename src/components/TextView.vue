@@ -1,5 +1,5 @@
 <template>
-    <div class="text">
+    <div class="text" ref="elRef">
         <div class="content" v-for="content in item.contents">
             <span
                 class="text"
@@ -21,8 +21,11 @@
 
 <script lang="ts" setup>
 
-    import type {PropType} from 'vue';
+    import type {PropType, Ref} from 'vue';
     import type {Text, TextLinkContent} from "../types/types";
+    import {ref} from "vue";
+
+    const elRef:Ref<HTMLElement | null> = ref(null);
 
     const props = defineProps({
         item:  {
@@ -39,7 +42,7 @@
 
     const onClickContents = (content: TextLinkContent)=>{
         if(props.last){
-            emit('divert', content.choiceIndex, props.item.id);
+            emit('divert', content.choiceIndex, elRef.value);
         }
     };
 
@@ -66,11 +69,11 @@
             }
         }
         &:not(.last){
-        .button{
-            background-color: black !important;
-            pointer-events: none;
-            opacity: 0.2;
+            .button{
+                background-color: black !important;
+                pointer-events: none;
+                opacity: 0.2;
+            }
         }
-    }
     }
 </style>

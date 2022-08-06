@@ -1,5 +1,5 @@
 <template>
-   <div class="choices">
+   <div class="choices" ref="elRef">
       <div class="choice" v-for="choice in item.choices" @click="onClickContents(choice)">
          <p>
             Choice: {{choice.text}} {{last}}
@@ -10,9 +10,11 @@
 
 <script lang="ts" setup>
 
-   import {ref } from 'vue';
-   import type {PropType } from 'vue';
-   import type {Choices} from "../types/types";
+   import type {PropType, Ref} from 'vue'; 
+   import type {Choices, Choice} from "../types/types";
+   import {ref} from "vue";
+   
+   const elRef:Ref<HTMLElement | null> = ref(null);
 
    const props = defineProps({
       item:  {
@@ -27,12 +29,11 @@
 
    const emit = defineEmits(['divert', 'disable']);
 
-   const onClickContents = (choice:{choiceIndex:number})=>{
+   const onClickContents = (choice:Choice)=>{
       if(props.last){
-         emit('divert', choice.choiceIndex, props.item.id);
+         emit('divert', choice.choiceIndex, elRef.value);
       }
    };
-
 
 </script>
 
@@ -58,4 +59,3 @@
       }
    }
 </style>
-
