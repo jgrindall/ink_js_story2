@@ -21,8 +21,9 @@
     
     </scroll>
 
-    <button style="position: fixed; top:0;right:0;z-index: 1000;" @click="getJSON">get json</button>
-    <button style="position: fixed; top:100px;right:0;z-index: 1000;" @click="loadJSON">load json</button>
+    <button style="position: fixed; top:0;right:0;z-index: 1000;" @click="saveJSON">Save</button>
+    <button style="position: fixed; top:60px;right:0;z-index: 1000;" @click="loadJSON">Load</button>
+    <button style="position: fixed; top:120px;right:0;z-index: 1000;" @click="clearJSON">Clear</button>
 
 </template>
 
@@ -31,7 +32,7 @@
     import { nextTick, onMounted, ref, computed } from 'vue';
     import type {Ref} from "vue";
     import Scroll from "./scroll/Scroll.vue";
-    import type { StoryItem, HasId } from '@/types/types';
+    import type { StoryItem, HasId, IScroll } from '@/types/types';
     import TextView from '@/components/TextView.vue';
     import ChoicesView from '@/components/ChoicesView.vue';
     import ImageView from '@/components/ImageView.vue';
@@ -39,13 +40,15 @@
     import {useStore as useStoryStore} from '@/stores/Story';
     import { storeToRefs } from 'pinia'
     import { last } from 'underscore';
-    
-    const scroll = ref<any | null>(null);
+
+    const scroll = ref<IScroll | null>(null);
     const storyStore = useStoryStore();
     const storyStoreRefs = storeToRefs(storyStore);
 
     const items:Ref<StoryItem[]> = storyStoreRefs.storyItems;
-    
+
+    console.log('scroll', scroll);
+
     const hash = {
         "text": TextView,
         "image": ImageView,
@@ -65,22 +68,34 @@
       return last(items.value);
     });
 
-    const getJSON = ()=>{
-        storyStore.getJSON();
+    const saveJSON = ()=>{
+        storyStore.saveJSON();
     };
 
     const loadJSON = ()=>{
         storyStore.loadJSON();
-    };
-
-    const divert = (choiceIndex: number, entryId:number)=>{
-        storyStore.divert(choiceIndex);
+        scroll.value?.showAll();
         nextTick(()=>{
             setTimeout(()=>{
-                scroll.value.goto(entryId);
+                scroll.value?.scrollToEnd();
             })
         })
-    };    
+    };
+
+    const clearJSON = ()=>{
+        storyStore.clearJSON();
+    }; 
+
+    const divert = (choiceIndex: number, element:HTMLElement)=>{
+        storyStore.divert(choiceIndex);
+        console.log(choiceIndex, element, element.offsetTop);
+        nextTick(()=>{
+            setTimeout(()=>{
+                //move to the one you just clicked on
+                (scroll.value as IScroll).scrollToPosition(element.offsetTop);
+            })
+        });
+    };
 
 </script>
 
@@ -88,5 +103,8 @@
     #canvas{
         width:100%;
         height: 100%;
+    }
+    button{
+        cursor: pointer;
     }
 </style>    

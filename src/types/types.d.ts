@@ -1,8 +1,10 @@
+export type Choice  = {
+    text: string,
+    choiceIndex:number
+}
+
 export type Choices = {
-    choices:{
-        text: string,
-        choiceIndex:number
-    }[]
+    choices:Choice[]
     id:number,
     type:"choices"
 }
@@ -67,3 +69,8 @@ export type Item = {
 export interface HasId{
     id:number
 }
+
+export type SaveData = {
+    items:StoryItem[],
+    storyJSON:string
+};

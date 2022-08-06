@@ -28,8 +28,6 @@ const isContainedIn = (container: HTMLElement)=>{
 };
 
 const getOverlapPercent = (rect:Rect, containerRect: Rect, options :{x:boolean, y:boolean} = {x:false, y:true}): number => {
-
-    console.log("op", rect, containerRect);
     const overlap = getOverlap(rect, containerRect);
     let numerator:number;
     let denominator:number;

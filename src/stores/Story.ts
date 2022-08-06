@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import {StoryManager} from "./StoryManager";
-import type {Choices, StoryItem, StoryContinueEvent, StoryState} from "../types/types";
+import type {SaveData, StoryItem, StoryContinueEvent, StoryState} from "../types/types";
 
 let storyManager: StoryManager;
 
@@ -26,9 +26,6 @@ export const useStore = defineStore('Story', {
                         storyManager = new StoryManager(content);
                         storyManager.on("data", (event:StoryContinueEvent)=>{
                             const items = event.data.items;
-
-                            console.log(this.items, items);
-
                             const currentText = this.items.filter(e=>e.type !== "choices");
                             const newText = items.filter(e=>e.type !== "choices");
                             const newChoices = items.filter(e=>e.type === "choices");
@@ -43,11 +40,24 @@ export const useStore = defineStore('Story', {
                     }
                 });
         },
-        getJSON(){
-            storyManager.getJSON();
+        clearJSON(){
+            window.localStorage.removeItem("story");
+        },
+        saveJSON(){
+            const items = this.items;
+            const storyJSON = storyManager.storyToJSON();
+            const data:SaveData = {
+                items,
+                storyJSON
+            };
+            const dataStr = JSON.stringify(data);
+            window.localStorage.setItem("story", dataStr);
         },
         loadJSON(){
-            storyManager.loadJSON();
+            const dataStr:string = window.localStorage.getItem("story") as string;
+            const data:SaveData = JSON.parse(dataStr) as SaveData;
+            this.items = data.items;
+            storyManager.setStoryJSON(data.storyJSON);
         },
         divert(choiceIndex:number){
             storyManager.chooseIndex(choiceIndex);

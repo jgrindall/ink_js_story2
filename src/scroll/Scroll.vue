@@ -1,14 +1,14 @@
 <template>
 
-    <div ref="wrapperRef" class="mm-scroll-wrapper">
+    <div ref="elRef" class="mm-scroll-wrapper">
         <div
             v-for="item in items"
             key="id"
             class="mm-scroll-item"
-            :id="item.id"
+            :id="'' + item.id"
             :class="{
                 'mm-scroll-visible': getEntry(item.id)?.visible,
-                'mm-scroll-visible2': getEntry(item.id)?.visible2
+                'mm-scroll-partial': getEntry(item.id)?.partial
             }"
         >    
             <slot :item="item"></slot>
@@ -22,8 +22,8 @@
         el:HTMLElement,
         visibleTimestamp: null | number, // time at which it should show
         visible: boolean, // is it shown?
-        visibleTimestamp2: null | number, // time at which it should show
-        visible2: boolean, // is it shown?
+        partialTimestamp: null | number, // time at which it should show
+        partial: boolean, // is it shown?
         id: number // required
     };
 </script>
@@ -34,10 +34,10 @@
     import {getOverlapPercentEl} from "../utils/Utils";
     import type { Ref, PropType  } from 'vue'
     import { debounce, difference, uniq, max, compact } from 'underscore';
-    import type {HasId} from "../types/types";
+    import type {HasId, IScroll} from "../types/types";
     import easyScroll from 'easy-scroll';
 
-    const wrapperRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
+    const elRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
     const mapIdToEntry:Ref< Record<number, Entry>> = ref({});
     const scrollingActive: Ref<Boolean> = ref(false);
     let interval:number;
@@ -81,8 +81,8 @@
             if(!entry.visible && entry.visibleTimestamp){
                 entry.visible = entry.visibleTimestamp <= now;
             }
-            if(!entry.visible2 && entry.visibleTimestamp2){
-                entry.visible2 = entry.visibleTimestamp2 <= now;
+            if(!entry.partial && entry.partialTimestamp){
+                entry.partial = entry.partialTimestamp <= now;
             }
         })
         if(interval){
@@ -91,23 +91,31 @@
     }
 
     /**
-     * Scroll to a specific element
-     * @param el
+     * scroll to the bottom
      */
-    const scrollTo = (el: HTMLElement)=>{
-        const top = el.offsetTop;
-        let wrapperEl = wrapperRef?.value as HTMLElement;
-        if(scrollingActive.value || !wrapperEl){
+    const scrollToEnd = ()=>{
+        const el = elRef.value as HTMLElement;
+        const top = el.scrollHeight - el.offsetHeight;
+        scrollToPosition(top);
+    };
+
+    /**
+     * Scroll to a specific position
+     * @param {number} top
+     */
+    const scrollToPosition = (top: number)=>{
+        const el = elRef.value as HTMLElement;
+        if(scrollingActive.value || !el){
             // already scrolling
             return;
         }
         scrollingActive.value = true;
         easyScroll({
-            'scrollableDomEle':wrapperEl,
+            'scrollableDomEle':el,
             'direction': 'bottom',
             'duration':props.scrollSpeed,
             'easingPreset': 'easeInQuad',
-            'scrollAmount': top - wrapperEl.scrollTop,
+            'scrollAmount': top - el.scrollTop,
             'onAnimationCompleteCallback': ()=>{
                 setTimeout(()=>{
                     scrollingActive.value = false;
@@ -118,7 +126,7 @@
 
     const update = ()=>{
 
-        const updateUsing = (percent:number, t1:'visible' | 'visible2', t2: 'visibleTimestamp' | 'visibleTimestamp2')=>{
+        const updateUsing = (percent:number, t1:'visible' | 'partial', t2: 'visibleTimestamp' | 'partialTimestamp')=>{
             const startDates = compact(Object.values(mapIdToEntry.value).map(obj => obj[t2]));
             const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
             let startDate = Math.max(Date.now(), maxStartDate);
@@ -149,7 +157,7 @@
         };
 
         updateUsing(props.overlapPercent, "visible", "visibleTimestamp");
-        updateUsing(0.01, "visible2", "visibleTimestamp2");
+        updateUsing(0.01, "partial", "partialTimestamp");
     };
 
     /**
@@ -167,12 +175,13 @@
         nextTick(()=>{
             nodesAdded.forEach((el:HTMLElement)=>{
                 const id:number = parseInt(el.id);
+                console.log("items", props.items, props.items.find(e => e.id === id));
                 mapIdToEntry.value[id] = {
                     el,
                     visibleTimestamp: null,
                     visible: false,
-                    visibleTimestamp2: null,
-                    visible2: false,
+                    partialTimestamp: null,
+                    partial: false,
                     id
                 }
             });
@@ -181,7 +190,7 @@
     };
 
     onMounted(()=>{
-        let el = wrapperRef?.value as HTMLElement;
+        let el = elRef.value as HTMLElement;
         el.addEventListener("scroll", handleScroll);
         mutationObserver = new MutationObserver(onChildren);
         mutationObserver.observe(el, {
@@ -198,7 +207,7 @@
 
     onBeforeUnmount(() => {
         // remove listeners
-        wrapperRef?.value?.removeEventListener("scroll", handleScroll);
+        elRef.value?.removeEventListener("scroll", handleScroll);
         cancelAnimationFrame(interval);
         mutationObserver.disconnect();
         resizeObserver.disconnect();
@@ -209,22 +218,26 @@
      * @param el
      */
     const isElemVisible = (el: HTMLElement, percent:number): boolean => {
-        const overlapPercent = wrapperRef.value ? getOverlapPercentEl(el, wrapperRef.value as HTMLElement) : 0;
+        const overlapPercent = elRef.value ? getOverlapPercentEl(el, elRef.value as HTMLElement) : 0;
         return overlapPercent >= percent;
     };
 
     let handleScroll = debounce(update, props.speed);
 
-    /**
-     * Scroll to a specific id
-     * @param {number} id 
-     */
-    const goto = (id:number)=>{
-        const entry = getEntry(id);
-        scrollTo(entry.el);
-    }
+    const showAll = ()=>{
+        Object.values(mapIdToEntry.value).forEach((entry:Entry)=>{
+            entry.visible = true;
+            entry.partial = true;
+        });
+    };
 
-    defineExpose({ goto })
+    const _expose:IScroll = {
+        scrollToPosition,
+        scrollToEnd,
+        showAll
+    };
+
+    defineExpose(_expose)
 
 </script>
 
@@ -240,7 +253,7 @@
             opacity: 0;
             -webkit-transition: opacity 0.5s ease-in-out;
             transition: opacity 0.5s ease-in-out;
-            &.mm-scroll-visible2{
+            &.mm-scroll-partial{
                 opacity: 0.1;
             }
             &.mm-scroll-visible{

@@ -26,16 +26,6 @@ export class StoryManager extends EventEmitter {
         super();
         this.story = new Story(content);
 
-        //this.story.state.LoadJson(testSavedState);
-
-        /*console.log(this.story.currentText);
-        console.log(this.story.currentChoices);
-
-        setInterval(()=>{
-            console.log(this.story.currentText);
-            console.log(this.story.currentChoices);
-        }, 2000)*/
-
         this.story.onChoosePathString = (arg1: string, arg2: any[])=>{
            console.log('onChoosePathString', arg1, arg2);
         };
@@ -46,13 +36,13 @@ export class StoryManager extends EventEmitter {
     public choosePath(path: any){
         this.story.ChoosePath(path);
     }
-    public loadJSON(){
-        const s = JSON.stringify(savedState);
-        this.story.state.LoadJson(s);
+    public storyToJSON(): string{
+        return this.story.state.toJson();
     }
-    public getJSON(){
-        const s1:string = this.story.state.toJson();
-        console.log(s1);
+    public setStoryJSON(json:string):void{
+        //console.log(this.story.currentText);
+        //console.log(this.story.currentChoices);
+        this.story.state.LoadJson(json);
     }
     public chooseIndex(index:number){
         this.story.ChooseChoiceIndex(index);
