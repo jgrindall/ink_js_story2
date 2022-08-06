@@ -54,13 +54,13 @@
            // how fast elements appear (one by one)
            type:Number,
            required: false,
-           default:500
+           default:250
        },
        scrollSpeed:{
            // how fast relevant elements scroll into view
            type:Number,
            required: false,
-           default:1000
+           default:500
        },
        overlapPercent:{
            // how to detect whether an element is visible or not

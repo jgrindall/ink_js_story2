@@ -85,12 +85,13 @@
     }; 
 
     const divert = (choiceIndex: number, element:HTMLElement)=>{
+        const top = element.offsetTop;
         storyStore.divert(choiceIndex);
         nextTick(()=>{
             setTimeout(()=>{
                 //move to the one you just clicked on
-                (scroll.value as IScroll).scrollToPosition(element.offsetTop);
-            })
+                (scroll.value as IScroll).scrollToPosition(top);
+            });
         });
     };
 
