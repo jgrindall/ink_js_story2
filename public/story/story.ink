@@ -15,6 +15,21 @@ One day something happened2
 #{"effects": ["expand"] }
 
 One day something happened3
+One day something happened3
+
+One day something happened3
+
+One day something happened3
+
+One day something happened3
+
+One day something happened3
+
+One day something happened3
+
+One day something happened3
+
+One day something happened3
 
 This is an inline choice %choice% you can click it
 
