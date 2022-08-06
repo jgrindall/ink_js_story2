@@ -172,21 +172,18 @@
                 });
             }
         });
-        nextTick(()=>{
-            nodesAdded.forEach((el:HTMLElement)=>{
-                const id:number = parseInt(el.id);
-                console.log("items", props.items, props.items.find(e => e.id === id));
-                mapIdToEntry.value[id] = {
-                    el,
-                    visibleTimestamp: null,
-                    visible: false,
-                    partialTimestamp: null,
-                    partial: false,
-                    id
-                }
-            });
-            update();
-        })
+        nodesAdded.forEach((el:HTMLElement)=>{
+            const id:number = parseInt(el.id);
+            mapIdToEntry.value[id] = {
+                el,
+                visibleTimestamp: null,
+                visible: false,
+                partialTimestamp: null,
+                partial: false,
+                id
+            }
+        });
+        update();
     };
 
     onMounted(()=>{
