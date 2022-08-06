@@ -47,8 +47,6 @@
 
     const items:Ref<StoryItem[]> = storyStoreRefs.storyItems;
 
-    console.log('scroll', scroll);
-
     const hash = {
         "text": TextView,
         "image": ImageView,
@@ -74,9 +72,9 @@
 
     const loadJSON = ()=>{
         storyStore.loadJSON();
-        scroll.value?.showAll();
         nextTick(()=>{
             setTimeout(()=>{
+                scroll.value?.showAll();
                 scroll.value?.scrollToEnd();
             })
         })
@@ -88,7 +86,6 @@
 
     const divert = (choiceIndex: number, element:HTMLElement)=>{
         storyStore.divert(choiceIndex);
-        console.log(choiceIndex, element, element.offsetTop);
         nextTick(()=>{
             setTimeout(()=>{
                 //move to the one you just clicked on

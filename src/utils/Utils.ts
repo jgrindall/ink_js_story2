@@ -1,3 +1,5 @@
+import { uniq } from 'underscore';
+
 interface Rect{
     top:number,
     left:number,
@@ -78,6 +80,18 @@ const count = (s:string, needle:string) => {
     return s.split(needle).length - 1;
 };
 
+const getAddedNodes = (mutations: MutationRecord[]) : HTMLElement[]=>{
+    const callback = (currentValue:HTMLElement[], mutation:MutationRecord)=>{
+        return mutation.type === "childList" ?
+        [
+            ...currentValue,
+            ...Array.from(mutation.addedNodes)
+        ]
+        : currentValue;
+    };
+    return uniq(mutations.reduce(callback, [] as HTMLElement[]));
+};
+
 export {
     isContained,
     isContainedIn,
@@ -86,5 +100,6 @@ export {
     getOverlap,
     merge,
     id,
-    count
+    count,
+    getAddedNodes
 }

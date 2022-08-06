@@ -19,7 +19,7 @@
 
 <script lang="ts">
     type Entry = {
-        el:HTMLElement,
+        el:HTMLElement | null,
         visibleTimestamp: null | number, // time at which it should show
         visible: boolean, // is it shown?
         partialTimestamp: null | number, // time at which it should show
@@ -30,8 +30,8 @@
 
 <script lang="ts" setup>
 
-    import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
-    import {getOverlapPercentEl} from "../utils/Utils";
+    import { ref, onMounted, onBeforeUnmount, watchEffect } from 'vue'
+    import {getOverlapPercentEl, getAddedNodes} from "../utils/Utils";
     import type { Ref, PropType  } from 'vue'
     import { debounce, difference, uniq, max, compact } from 'underscore';
     import type {HasId, IScroll} from "../types/types";
@@ -160,28 +160,36 @@
         updateUsing(0.01, "partial", "partialTimestamp");
     };
 
-    /**
-     * when children appear, update the visibility
-     */
-    let onChildren = (mutations : MutationRecord[])=>{
-        const nodesAdded:HTMLElement[] = [];
-        mutations.forEach((mutation:MutationRecord)=>{
-            if(mutation.type === "childList"){
-                mutation.addedNodes.forEach((node:Node)=>{
-                    nodesAdded.push(node as HTMLElement);
-                });
-            }
+    watchEffect(() => {
+        props.items.forEach( (item:HasId) =>{
+            addId(item.id);
         });
-        nodesAdded.forEach((el:HTMLElement)=>{
-            const id:number = parseInt(el.id);
+    });
+
+    const addId = (id:number, el?:HTMLElement)=>{
+        const entry = mapIdToEntry.value[id];
+        if(entry){
+            entry.el = el || null;
+        }
+        else{
             mapIdToEntry.value[id] = {
-                el,
+                el:el || null,
                 visibleTimestamp: null,
                 visible: false,
                 partialTimestamp: null,
                 partial: false,
                 id
-            }
+            };
+        }
+    };
+
+    /**
+     * when children appear, update the visibility
+     */
+    let onChildren = (mutations : MutationRecord[])=>{
+        const nodesAdded = getAddedNodes(mutations);
+        nodesAdded.forEach((el:HTMLElement)=>{
+            addId(parseInt(el.id), el);
         });
         update();
     };
@@ -189,12 +197,14 @@
     onMounted(()=>{
         let el = elRef.value as HTMLElement;
         el.addEventListener("scroll", handleScroll);
+        // listen to children being added
         mutationObserver = new MutationObserver(onChildren);
         mutationObserver.observe(el, {
             childList: true,
             attributes:true,
             subtree:true
         });
+        // listen to window resize
         resizeObserver = new ResizeObserver(update);
         resizeObserver.observe(el);
         // begin updating each frame
@@ -202,8 +212,10 @@
         setTimeout(update);
     });
 
+    /**
+     * remove listeners
+     */
     onBeforeUnmount(() => {
-        // remove listeners
         elRef.value?.removeEventListener("scroll", handleScroll);
         cancelAnimationFrame(interval);
         mutationObserver.disconnect();
@@ -214,7 +226,10 @@
      * Helper function
      * @param el
      */
-    const isElemVisible = (el: HTMLElement, percent:number): boolean => {
+    const isElemVisible = (el: HTMLElement | null, percent:number): boolean => {
+        if(!el){
+            return false;
+        }
         const overlapPercent = elRef.value ? getOverlapPercentEl(el, elRef.value as HTMLElement) : 0;
         return overlapPercent >= percent;
     };
@@ -222,10 +237,11 @@
     let handleScroll = debounce(update, props.speed);
 
     const showAll = ()=>{
-        Object.values(mapIdToEntry.value).forEach((entry:Entry)=>{
-            entry.visible = true;
-            entry.partial = true;
-        });
+        Object.values(mapIdToEntry.value)
+            .forEach((entry:Entry)=>{
+                entry.visible = true;
+                entry.partial = true;
+            });
     };
 
     const _expose:IScroll = {
@@ -259,6 +275,3 @@
         }
     }
 </style>
-
-
-
