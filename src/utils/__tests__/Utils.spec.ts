@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 
 import { mount } from '@vue/test-utils'
-import {getOverlap, getOverlapPercent} from '../Utils'
+import {getOverlap, getOverlapPercent, count} from '../Utils'
 
 describe('test Utils', () => {
     
@@ -55,5 +55,26 @@ describe('test Utils', () => {
       expect(getOverlapPercent(r1, r2, {x: true, y:true})).toEqual(50);
 
     })
+
+    it('test count', ()=>{
+      expect(count("HELLO", "%")).toEqual(0);
+      expect(count("HELLO%", "%")).toEqual(1);
+      expect(count("%HELLO", "%")).toEqual(1);
+      expect(count("%", "%")).toEqual(1);
+      expect(count("% ", "%")).toEqual(1);
+      expect(count(" %", "%")).toEqual(1);
+      expect(count("%%", "%")).toEqual(2);
+      expect(count("% %", "%")).toEqual(2);
+      expect(count("  %%  ", "%")).toEqual(2);
+      expect(count("HE%LLO", "%")).toEqual(1);
+      expect(count("HE%L%O", "%")).toEqual(2);
+      expect(count("HE%%LLO", "%")).toEqual(2);
+      expect(count("H%L%LO%", "%")).toEqual(3);
+      expect(count("H%L%%LO", "%")).toEqual(3);
+      expect(count("%%H%L%LO", "%")).toEqual(4);
+      expect(count("%%H%L%LO%%", "%")).toEqual(6);
+      
+      
+    });
 
 })
