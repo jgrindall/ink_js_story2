@@ -25,6 +25,9 @@ export const useStore = defineStore('Story', {
                     if(content){
                         storyManager = new StoryManager(content);
                         storyManager.on("data", (event:StoryContinueEvent)=>{
+
+                            console.log(event.data.tags);
+
                             const items = event.data.items;
                             const currentText = this.items.filter(e=>e.type !== "choices");
                             const newText = items.filter(e=>e.type !== "choices");

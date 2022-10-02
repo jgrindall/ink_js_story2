@@ -4,17 +4,40 @@ VAR name = "John"
 
 == start ==
 
+\{"type":"image", "src": "a.png", "class":"banner"\}
+
 #{"effects": ["slide-left"] }
 
-\{"type":"image", "src": "a.png"\}
+
 
 One day something happened1
 
-One day something happened2
+One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2
+
+\{"type":"image", "src": "a.png", "class":"center"\}
 
 #{"effects": ["expand"] }
 
 One day something happened3
+One day something happened3
+
+One day something happened3
+
+\{"type":"image", "src": "a.png", "class":"center"\}
+
+One day something happened3
+
+One day something happened3
+
+One day something happened3
+
+ \{"type":"code", "file": "1.py"\}
+ 
+ 
+ + [True] True -> a
+ + [False] False -> p
+ 
+
 One day something happened3
 
 One day something happened3
@@ -44,11 +67,15 @@ BANG
 
 A tyre has burst
 
+#{"bg": 1 }
+
 Luckily, you can see a house in the distance. You walk up to the front door
 
 YOu can see a path heading around the house to the right, and a large wooden door.
 
 YOu can see a path heading around the house to the right, and a large wooden door.
+
+#{"bg": 2 }
 
 You can  %choice% or if you decide to get dry as quickly as possible you can  %choice%. CHoose quickly!
 
@@ -61,12 +88,16 @@ You can  %choice% or if you decide to get dry as quickly as possible you can  %c
  == p ==
  This is p
  
+ \{"type":"code", "file": "1.py"\}
+ 
+ 
+ #{"bg": 3 }
  * [Choice ccc] -> start
  * [Choice ddd] Hello -> start
  
  == q ==
  This is q
-
+ #{"bg": 4 }
  * [Choice eee] -> start
  * [Choice fff] Hello -> start
  

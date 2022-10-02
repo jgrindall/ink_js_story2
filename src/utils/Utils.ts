@@ -92,6 +92,18 @@ const getAddedNodes = (mutations: MutationRecord[]) : HTMLElement[]=>{
     return uniq(mutations.reduce(callback, [] as HTMLElement[]));
 };
 
+const getRemovedNodes = (mutations: MutationRecord[]) : HTMLElement[]=>{
+    const callback = (currentValue:HTMLElement[], mutation:MutationRecord)=>{
+        return mutation.type === "childList" ?
+        [
+            ...currentValue,
+            ...Array.from(mutation.removedNodes)
+        ]
+        : currentValue;
+    };
+    return uniq(mutations.reduce(callback, [] as HTMLElement[]));
+};
+
 export {
     isContained,
     isContainedIn,
@@ -101,5 +113,6 @@ export {
     merge,
     id,
     count,
-    getAddedNodes
+    getAddedNodes,
+    getRemovedNodes
 }

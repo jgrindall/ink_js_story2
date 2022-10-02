@@ -54,15 +54,26 @@ export class StoryManager extends EventEmitter {
     }
     private getCurrentParagraph(): Paragraph{
         const text:string = (this.story.Continue() || "").trim();
+
+        console.log(text);
+
         try{
             // try and parse JSON
             const parsed = JSON.parse(text);
-            return {
+            return parsed.type === "image" ? 
+            {
                 type:"image",
                 src:parsed.src,
                 tags: tagsToJSON(this.story.currentTags),
+                id: id(),
+                className:parsed.class
+            }
+            :{
+                type:"code",
+                file:parsed.file,
+                tags: tagsToJSON(this.story.currentTags),
                 id: id()
-            };
+            }
         }
         catch(e){
             //fail, it is a normal ink element
@@ -114,7 +125,8 @@ export class StoryManager extends EventEmitter {
         
         return {
             items,
-            variables: this.story.variablesState
+            variables: this.story.variablesState,
+            tags: this.story.currentTags
         };
     }
     public continue(){
@@ -122,8 +134,11 @@ export class StoryManager extends EventEmitter {
         const currentChoices = this.story.currentChoices;
         let data;
         if(this.story.canContinue){
+            console.log(1, this.story.currentTags);
             data = this.getContinueStoryData();
+            console.log(2, this.story.currentTags);
         }
+        console.log(data);
         this.fire("data", data);
     }
     public setVariable(varName:string, value: any){

@@ -1,6 +1,7 @@
 <template>
     <div class="text" ref="elRef">
         <div class="content" v-for="content in item.contents">
+
             <span
                 class="text"
                 v-if="content.type === 'text'"
@@ -26,7 +27,7 @@
     import {ref} from "vue";
 
     const elRef:Ref<HTMLElement | null> = ref(null);
-
+    
     const props = defineProps({
         item:  {
             type: Object as PropType<Text>,
@@ -53,6 +54,9 @@
         background: transparent;
         position: relative;
         margin:10px;
+        max-width: 800px;
+        margin:auto;
+        text-align: center;
         .content{
             display: inline;
             background: rgba(100,100,250,0.2);

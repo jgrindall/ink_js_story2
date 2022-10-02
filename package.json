@@ -10,16 +10,25 @@
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs,.ts,.tsx,.cts,.mts --fix --ignore-path .gitignore"
   },
   "dependencies": {
-    "pinia": "^2.0.13",
-    "vue": "^3.2.33",
-    "vue-router": "^4.0.14",
-    "underscore": "^1.13.2",
     "@billjs/event-emitter": "^1.0.3",
+    "@codemirror/basic-setup": "^0.20.0",
+    "@codemirror/lang-javascript": "^6.1.0",
+    "@codemirror/lang-python": "^6.0.2",
+    "@codemirror/state": "^6.1.2",
+    "@codemirror/theme-one-dark": "^6.1.0",
+    "cm6-theme-solarized-dark": "^0.2.0",
+    "codemirror": "6.0.1",
     "core-js": "^3.6.5",
+    "easy-scroll": "^0.7.0",
     "inkjs": "^2.0.0",
+    "intersection-observer": "^0.12.2",
+    "pinia": "^2.0.13",
     "sass": "^1.51.0",
+    "scrollama": "^3.2.0",
+    "underscore": "^1.13.2",
     "v-smooth-scroll": "^2.0.0-beta.2",
-    "easy-scroll": "^0.7.0"
+    "vue": "^3.2.33",
+    "vue-router": "^4.0.14"
   },
   "devDependencies": {
     "@rushstack/eslint-patch": "^1.1.0",

@@ -1,14 +1,14 @@
 <template>
-    <div class="text">
-        <img :src="'/images/' + item.src"/>
+    <div class="image" :class="item.className">
+        <div :style="style">
+        </div>
     </div>
 
 </template>
 
 <script lang="ts" setup>
 
-    import {  computed, ref } from 'vue';
-    import type {PropType} from 'vue';
+    import {computed, type PropType, type StyleValue} from 'vue';
     import type {Image} from "../types/types";
 
     const props = defineProps({
@@ -16,21 +16,41 @@
             type: Object as PropType<Image>,
             required: true
         }
+    });
+
+    const style = computed(() : StyleValue =>{
+        return {
+            backgroundImage: `url(/images/${props.item.src})`
+        };
     })
 
 </script>
 
 <style lang="scss" scoped>
-    .text{
+    .image{
         background: transparent;
         position: relative;
-        margin:8px;
-        
-        img{
-            width: 250px;
-            height: 250px;
-            background: gold;
-            margin:8px;
+        margin:0;
+        >div{
+            width:100%;
+            height:100%;
+        }
+
+        &.banner{
+            height:60vh;
+            & div{
+                background-size: cover;
+            }
+        }
+        &.center{
+            text-align: center;
+            height: 200px;
+            width:100%;
+            > div{
+                width:200px;
+                height:200px;
+                margin: auto;
+            }
         }
     }
 </style>

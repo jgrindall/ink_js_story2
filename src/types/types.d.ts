@@ -1,3 +1,9 @@
+export interface IScroll{
+    showAll:()=>void,
+    scrollToPosition:(top:number)=>void,
+    scrollToEnd:()=>void
+}
+
 export type Choice  = {
     text: string,
     choiceIndex:number
@@ -35,10 +41,18 @@ export type Image = {
     type:"image",
     id:number,
     tags:Tags,
-    src:string
+    src:string,
+    className?:string
 };
 
-export type Paragraph = Text | Image;
+export type Code = {
+    type:"code",
+    id:number,
+    tags:Tags,
+    file:string
+};
+
+export type Paragraph = Text | Image | Code;
 
 export type StoryItem = Paragraph | Choices;
 
@@ -58,6 +72,7 @@ export type Tags = Partial<{
 export type StoryData = {
     items:StoryItem[],
     variables: any;
+    tags:any;
 };
 
 export type Item = {
