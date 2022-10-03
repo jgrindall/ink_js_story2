@@ -1,7 +1,7 @@
 
 .mm-scroll-item{
     .text{
-        font-family: "Esteban", Georgia, "Times New Roman", Times, serif;
+        font-family: "Bamburgh", Georgia, "Times New Roman", Times, serif;
         color:#ccc;
     }
 }
@@ -100,20 +100,23 @@ $names: "fading", "banana", "orange", "pear", "grape";
     }
 }
 
+
+$bk-scrollbar-width: 24px;
+
 ::-webkit-scrollbar {
-    width: 12px;
+    width: $bk-scrollbar-width;
 }
 
 ::-webkit-scrollbar-track {
     -webkit-box-shadow: none;
     background: transparent;
-    border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb {
-    border-radius: 10px;
+    border-radius: $bk-scrollbar-width/2;
     background: rgba(150,150,150, 0.25);
     -webkit-box-shadow: none;
+    box-shadow: none;
     &:hover{
         background: rgba(150,150,150, 0.666);
     }

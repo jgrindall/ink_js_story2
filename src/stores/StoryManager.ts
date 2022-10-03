@@ -1,10 +1,10 @@
 import {Story} from "inkjs";
 import {EventEmitter} from "@billjs/event-emitter";
-import type {Choices, Paragraph, StoryData, StoryItem} from "../types/types";
-import {id, count} from "../utils/Utils";
+import type {Choices, Image, Section, StoryData, Code} from "../types/types";
+import {id} from "../utils/Utils";
 import {last} from "underscore";
 import savedState from "../persistence/savedState.json";
-import {tagsToJSON, choiceSeparator, replace} from "../utils/StoryUtils";
+import {tagsToJSON, choiceSeparator, replaceAll} from "../utils/StoryUtils";
 
 let s = JSON.stringify(savedState).replace(/\n/g, "");
 
@@ -52,56 +52,61 @@ export class StoryManager extends EventEmitter {
         this.story.ChoosePathString(knotName);
         this.continue();
     }
-    private getCurrentParagraph(): Paragraph{
-        const text:string = (this.story.Continue() || "").trim();
-
-        console.log(text);
-
-        try{
-            // try and parse JSON
-            const parsed = JSON.parse(text);
-            return parsed.type === "image" ? 
-            {
+    private getSection(): Section{
+        const makeImage = (json: any, tags:any):Image=>{
+            return {
                 type:"image",
-                src:parsed.src,
-                tags: tagsToJSON(this.story.currentTags),
+                src:json.src,
+                tags:tags,
                 id: id(),
-                className:parsed.class
+                className:json.class
             }
-            :{
+        }
+
+        const makeCode = (json: any,  tags:any): Code=>{
+            const choices:Choices = {
+                id: id(),
+                type:"choices",
+                choices:[]
+            };
+            return {
                 type:"code",
-                file:parsed.file,
-                tags: tagsToJSON(this.story.currentTags),
+                file:json.file,
+                choices:choices,
+                tags:tags,
                 id: id()
             }
+        }
+        const text:string = (this.story.Continue() || "").trim();
+        const tags = tagsToJSON(this.story.currentTags);
+        try{
+            // try and parse JSON
+            const json = JSON.parse(text);
+            return json.type === "image" ? makeImage(json, tags) : makeCode(json, tags);
         }
         catch(e){
             //fail, it is a normal ink element
         }
         return {
             type:"text",
-            tags: tagsToJSON(this.story.currentTags),
+            tags: tags,
             contents:[{
                 type: "text",
-                text: text,
-                numChoices: count(text, choiceSeparator)
+                text: text
             }],
             id: id()
         }
     }
     private getContinueStoryData(): StoryData{
-        const paragraphs: Paragraph[] = [];
+        const sections: Section[] = [];
         while(this.story.canContinue){
-            paragraphs.push({
-                ...this.getCurrentParagraph()
+            const section = this.getSection();
+            sections.push({
+                ...section
             });
         }
 
-        let items:StoryItem[] = [
-            ...paragraphs
-        ];
-
-        const lastParagraph:Paragraph = last(paragraphs) as Paragraph;
+        const lastSection:Section = last(sections) as Section;
         let currentChoices = this.story.currentChoices;
         
         /*
@@ -109,36 +114,38 @@ export class StoryManager extends EventEmitter {
         * the last paragraph rather than a list of separate choices
         */
 
-        if(lastParagraph && lastParagraph.type === "text" && !replace(lastParagraph, currentChoices)){
-            const choices = currentChoices.map((choice: {text: string}, choiceIndex:number) => {
-                return {
-                    text: choice.text || "choice",
-                    choiceIndex
-                };
-            });
-            items.push({
-                type:"choices",
-                id: id(),
-                choices
-            });
+        const choices = currentChoices.map((choice: {text: string}, choiceIndex:number) => {
+            return {
+                text: choice.text || "choice",
+                choiceIndex
+            };
+        });
+        
+        const choicesSection: Choices = {
+            type:"choices",
+            id: id(),
+            choices
+        };
+
+        const replacedChoices = replaceAll(lastSection, choicesSection);
+
+        if(!replacedChoices){
+            sections.push(choicesSection);
         }
         
+        const tags =  tagsToJSON(this.story.currentTags);
+        
         return {
-            items,
+            sections,
             variables: this.story.variablesState,
-            tags: this.story.currentTags
+            tags: tags
         };
     }
     public continue(){
-        const currentText = this.story.currentText;
-        const currentChoices = this.story.currentChoices;
         let data;
         if(this.story.canContinue){
-            console.log(1, this.story.currentTags);
             data = this.getContinueStoryData();
-            console.log(2, this.story.currentTags);
         }
-        console.log(data);
         this.fire("data", data);
     }
     public setVariable(varName:string, value: any){

@@ -117,7 +117,7 @@
             'scrollableDomEle':el,
             'direction': 'bottom',
             'duration':props.scrollSpeed,
-            'easingPreset': 'easeInQuad',
+            'easingPreset': 'easeOutCubic',
             'scrollAmount': top - el.scrollTop,
             'onAnimationCompleteCallback': ()=>{
                 setTimeout(()=>{

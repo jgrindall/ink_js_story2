@@ -1,9 +1,10 @@
 <template>
 
     <div id="toolbar">
-        <button>Save</button>
-        <button>Load</button>
-        Skill, Stamina, Luck
+        <button @click="saveJSON">Save</button>
+        <button @click="loadJSON">Load</button>
+        <button @click="clearJSON">Clear</button>
+        Skill, Stamina, Luck?
     </div>
 
     <div id="canvas">
@@ -12,7 +13,7 @@
     
     <scroll2
         v-slot="{ item: item }"
-        :items="items"
+        :items="sections"
         @scroll = "onScroll"
         ref="scroll"
         >
@@ -24,16 +25,13 @@
             :item="item"
             :last="item === lastItem"
             @divert="divert"
+            @run="run"
         >
         </component>
     
     </scroll2>
 
-    <button style="position: fixed; top:0;right:0;z-index: 1000;" @click="saveJSON">Save</button>
-    <button style="position: fixed; top:60px;right:0;z-index: 1000;" @click="loadJSON">Load</button>
-    <button style="position: fixed; top:120px;right:0;z-index: 1000;" @click="clearJSON">Clear</button>
-
-    <button v-if="!showDown" style="position: fixed; top:180px;right:0;z-index: 1000;" @click="down">Down</button>
+    <button class="down" :class="{'showDown': showDown}" @click="down">Down</button>
 
 </template>
 
@@ -42,7 +40,7 @@
     import { nextTick, onMounted, ref, computed } from 'vue';
     import type {Ref} from "vue";
     import Scroll2 from "./scroll/Scroll2.vue";
-    import type { StoryItem, HasId, IScroll } from '@/types/types';
+    import type { HasId, IScroll, Section } from '@/types/types';
     import TextView from '@/components/TextView.vue';
     import ChoicesView from '@/components/ChoicesView.vue';
     import ImageView from '@/components/ImageView.vue';
@@ -56,15 +54,15 @@
     const storyStore = useStoryStore();
     const storyStoreRefs = storeToRefs(storyStore);
 
-    const items:Ref<StoryItem[]> = storyStoreRefs.storyItems;
+    const sections:Ref<Section[]> = storyStoreRefs.storyItems;
 
     const showDown = ref<boolean>(false);
 
-    const onScroll = (_showDown: boolean)=>{
-        showDown.value = _showDown;
+    const onScroll = (_isFullyScrolled: boolean)=>{
+        showDown.value = !_isFullyScrolled;
     };
 
-    const hash = {
+    const hash:{[key:"text" | "image" | "choices" | "code"] : Section} = {
         "text": TextView,
         "image": ImageView,
         "choices": ChoicesView,
@@ -76,7 +74,7 @@
     };
 
     const getComponent = (item: HasId): typeof TextView | typeof ImageView | typeof ChoicesView | typeof CodeView => {
-        let type = ((item as unknown) as StoryItem).type;
+        let type = ((item as unknown) as Section).type;
         return hash[type];
     }
 
@@ -85,7 +83,7 @@
     });
 
     const lastItem = computed(() => {
-      return last(items.value);
+      return last(sections.value);
     });
 
     const saveJSON = ()=>{
@@ -105,6 +103,10 @@
     const clearJSON = ()=>{
         storyStore.clearJSON();
     }; 
+
+    const run = (element:HTMLElement)=>{
+        divert(0, element);
+    };
 
     const divert = (choiceIndex: number, element:HTMLElement)=>{
         const top = element.offsetTop;
@@ -135,6 +137,22 @@
     }
     button{
         cursor: pointer;
+        &.down{
+            position: fixed;
+            bottom:10px;
+            right:10px;
+            z-index: 1000;
+            font-family: "Bamburgh";
+            border:1px dashed #ccc;
+            background:rgba(200,200,200,0.1);
+            color:white;
+            opacity: 0;
+            -webkit-transition: opacity 0.5s ease-in-out;
+            transition: opacity 0.5s ease-in-out;
+            &.showDown{
+                opacity: 1;
+            }
+        }
     }
     .mm-scroll-wrapper{
         padding-top: 0;

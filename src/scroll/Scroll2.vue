@@ -1,21 +1,12 @@
 <template>
-
     <div ref="elRef" class="mm-scroll-wrapper">
-        <div class="leftright">
-            <div id="left1"></div>
-            <div id="left2"></div>
-            <div id="left3"></div>
-        </div>
-
-
         <div
             v-for="item in items"
             key="id"
             class="mm-scroll-item"
             :id="'' + item.id"
             :class="{
-                'mm-scroll-visible': getEntry(item.id)?.visible,
-                'mm-scroll-partial': getEntry(item.id)?.partial
+                'mm-scroll-visible': getEntry(item.id)?.visible
             }"
         >    
             <slot :item="item"></slot>
@@ -29,10 +20,7 @@
         el:HTMLElement | null,
         id: number, // required
         visible: boolean, // is it shown?
-        partial: boolean, // is it shown?
-        visibleTimestamp: null | number, // time at which it should show
-        partialTimestamp: null | number, // time at which it should show
-        
+        visibleTimestamp: null | number, // time at which it should show       
     };
 </script>
 
@@ -54,6 +42,10 @@
     let mutationObserver: MutationObserver;
     let intersectionObsever: IntersectionObserver;
 
+    const min = (as:number[])=>{
+        return as.reduce((a, b) => Math.min(a,b), Infinity);
+    };
+
     const props = defineProps({
        items:  {
            // list of items
@@ -64,13 +56,13 @@
            // how fast elements appear (one by one)
            type:Number,
            required: false,
-           default:250
+           default:150
        },
        scrollSpeed:{
            // how fast relevant elements scroll into view
            type:Number,
            required: false,
-           default:500
+           default:750
        },
        overlapPercent:{
            // how to detect whether an element is visible or not
@@ -90,9 +82,6 @@
         Object.values(mapIdToEntry.value).forEach((entry:Entry)=>{
             if(!entry.visible && entry.visibleTimestamp){
                 entry.visible = entry.visibleTimestamp <= now;
-            }
-            if(!entry.partial && entry.partialTimestamp){
-                entry.partial = entry.partialTimestamp <= now;
             }
         })
         if(interval){
@@ -121,12 +110,12 @@
         }
         scrollingActive.value = true;
         easyScroll({
-            'scrollableDomEle':el,
-            'direction': 'bottom',
-            'duration':props.scrollSpeed,
-            'easingPreset': 'easeInQuad',
-            'scrollAmount': top - el.scrollTop,
-            'onAnimationCompleteCallback': ()=>{
+            scrollableDomEle:el,
+            direction: 'bottom',
+            duration:props.scrollSpeed,
+            easingPreset: 'easeInQuad',
+            scrollAmount: top - el.scrollTop,
+            onAnimationCompleteCallback: ()=>{
                 setTimeout(()=>{
                     scrollingActive.value = false;
                 });
@@ -141,7 +130,6 @@
     });
 
     const addId = (id:number, el?:HTMLElement)=>{
-        //TODO - not when eg. code mirror changes
         const entry = mapIdToEntry.value[id];
         if(entry){
             entry.el = el || null;
@@ -151,9 +139,7 @@
                 el:el || null,
                 id,
                 visible: false,
-                partial: false,
-                visibleTimestamp: null,
-                partialTimestamp: null
+                visibleTimestamp: null
             };
         }
         if(el){
@@ -173,7 +159,6 @@
      * when children appear, update the visibility
      */
     const onChildrenChanged = (mutations : MutationRecord[])=>{
-        console.log("mutations", mutations);
         const nodesAdded = getAddedNodes(mutations);
         const nodesRemoved = getRemovedNodes(mutations);
         nodesAdded.forEach((el:HTMLElement)=>{
@@ -190,23 +175,33 @@
      const onIntersectChanged = (intersectionEntries : IntersectionObserverEntry[])=>{
 
         const toMakeVisible:Entry[] = [];
-        const toMakePartial:Entry[] = [];
-        
+    
+        const minRatio = 0.1;
+    
         intersectionEntries.forEach(intersectionEntry=>{
             const entry = getEntry(parseInt(intersectionEntry.target.id))
             if(entry){
-                if(!entry.partial && intersectionEntry.intersectionRatio >= 0.10){
-                    toMakePartial.push(entry);
-                }
-                if(!entry.visible && intersectionEntry.intersectionRatio >= 0.1){
+                if(!entry.visible && intersectionEntry.intersectionRatio >= minRatio){
                     toMakeVisible.push(entry);
                 }
             }
         });
 
+        if(toMakeVisible.length === 0){
+            return;
+        }
+
         const startDates = compact(Object.values(mapIdToEntry.value).map(obj => obj.visibleTimestamp));
         const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
         let startDate = Math.max(Date.now(), maxStartDate);
+
+        const ids = toMakeVisible.map(entry=>entry.id);
+        const minId = min(ids);
+        const prevVisible: Entry[] = Object.values(mapIdToEntry.value).filter(entry => entry.id < minId);
+
+        prevVisible.forEach((entry:Entry)=>{
+            entry.visibleTimestamp = startDate;
+        });
 
         toMakeVisible.forEach((entry:Entry, i:number)=>{
             entry.visibleTimestamp = startDate + props.speed*i;
@@ -215,17 +210,13 @@
 
     let handleScroll = ()=>{
         let el = elRef.value as HTMLElement;
-        console.log("onIntersectChanged", el.scrollHeight, el.clientHeight, el.scrollTop, el.scrollHeight === el.clientHeight + el.scrollTop);
         emit('scroll', el.scrollHeight === el.clientHeight + el.scrollTop);
     };
 
     onMounted(()=>{
         let el = elRef.value as HTMLElement;
-
         el.addEventListener("scroll", handleScroll);
-
-        console.log(el);
-
+        
         // listen to children being added
         mutationObserver = new MutationObserver(onChildrenChanged);
         mutationObserver.observe(el, {
@@ -234,13 +225,17 @@
             subtree:false
         });
 
-       intersectionObsever = new IntersectionObserver(onIntersectChanged, {
+        //listen to scrolling
+        intersectionObsever = new IntersectionObserver(onIntersectChanged, {
             root: elRef.value,
             threshold: [
                 0,
                 0.1,
-                0.9, 1.0]
+                0.9,
+                1.0
+            ]
         });
+        
         // begin updating each frame
         interval = requestAnimationFrame(updateVisibility);
     });
@@ -258,10 +253,8 @@
         const now = Date.now();
         Object.values(mapIdToEntry.value)
             .forEach((entry:Entry)=>{
-                entry.partial = true;
                 entry.visible = true;
                 entry.visibleTimestamp = now;
-                entry.partialTimestamp = now;
             });
     };
 
@@ -283,20 +276,18 @@
         height:100%;
         left:0;
         overflow-y: auto;
+        overflow-x: hidden;
         .mm-scroll-item{
             opacity: 0;
             -webkit-transition: opacity 0.5s ease-in-out;
             transition: opacity 0.5s ease-in-out;
-            &.mm-scroll-partial{
-                opacity: 0.1;
-            }
             &.mm-scroll-visible{
                 opacity: 1;
             }
-            &:nth-child(n + 3){
+            &:nth-child(n + 2){
                 margin-top:20px;
             }
-            &:nth-child(n + 2){
+            &:nth-child(n + 1){
                 margin-bottom:20px;
             }
         }

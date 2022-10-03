@@ -16,7 +16,6 @@ export type Choices = {
 }
 
 export type TextPlainContent = {
-    numChoices: number,
     text:string,
     type: "text"
 };
@@ -49,15 +48,14 @@ export type Code = {
     type:"code",
     id:number,
     tags:Tags,
-    file:string
+    file:string,
+    choices:Choices
 };
 
-export type Paragraph = Text | Image | Code;
-
-export type StoryItem = Paragraph | Choices;
+export type Section = Text | Image | Code | Choices;
 
 export type StoryState = {
-    items: StoryItem[]
+    sections: Section[]
 }
 
 export type StoryContinueEvent = {
@@ -68,9 +66,9 @@ export type Tags = Partial<{
     effects: string[],
     delay: number
 }>;
-
+``
 export type StoryData = {
-    items:StoryItem[],
+    sections:Section[],
     variables: any;
     tags:any;
 };
@@ -86,6 +84,6 @@ export interface HasId{
 }
 
 export type SaveData = {
-    items:StoryItem[],
+    sections:Section[],
     storyJSON:string
 };

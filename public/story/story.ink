@@ -4,15 +4,15 @@ VAR name = "John"
 
 == start ==
 
-\{"type":"image", "src": "a.png", "class":"banner"\}
+#{"background": "abc" }
+
+\{"type":"image", "src": "download.png", "class":"banner"\}
 
 #{"effects": ["slide-left"] }
 
-
-
 One day something happened1
 
-One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2
+One day something happened2 One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2One day something happened2 One day something happened2One day something happened2One day something happened2One day something happened2
 
 \{"type":"image", "src": "a.png", "class":"center"\}
 
@@ -33,10 +33,15 @@ One day something happened3
 
  \{"type":"code", "file": "1.py"\}
  
+ + [True] True -> donecode
+ + [False] False -> donecode
  
- + [True] True -> a
- + [False] False -> p
  
+ 
+ 
+ == donecode ==
+ 
+ Great!
 
 One day something happened3
 
@@ -51,6 +56,11 @@ One day something happened3
 One day something happened3
 
 One day something happened3
+
+ + [aaaa] aaaa -> choice
+ + [bbbb] bbbb -> choice
+
+== choice ==
 
 One day something happened3
 
@@ -72,6 +82,9 @@ A tyre has burst
 Luckily, you can see a house in the distance. You walk up to the front door
 
 YOu can see a path heading around the house to the right, and a large wooden door.
+
+
+\{"type":"image", "src": "download.png", "class":"banner"\}
 
 YOu can see a path heading around the house to the right, and a large wooden door.
 

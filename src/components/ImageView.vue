@@ -40,6 +40,7 @@
             height:60vh;
             & div{
                 background-size: cover;
+                background-position: center center;
             }
         }
         &.center{
@@ -50,6 +51,7 @@
                 width:200px;
                 height:200px;
                 margin: auto;
+                background-size: 100% 100%;
             }
         }
     }

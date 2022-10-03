@@ -11,6 +11,7 @@
 <script lang="ts" setup>
 
    import type {PropType, Ref} from 'vue'; 
+   import { computed } from 'vue';
    import type {Choices, Choice} from "../types/types";
    import {ref} from "vue";
    
@@ -46,15 +47,23 @@
       .choice{
          position: relative;
          cursor: pointer;
+         max-width: 800px;
+         margin: auto;
+         text-align: center;
+         border:1px dashed #ccc;
+         margin-bottom:12px;
+
+         font-family: "Bamburgh", Georgia, "Times New Roman", Times, serif;
+         color:#ccc;
+
          &:hover{
             p{
                background: #222;
             }
          }
          p{
-            background: #111;
-            margin:40px;
-            padding:40px;
+            margin:4px;
+            padding:4px;
          }
       }
    }

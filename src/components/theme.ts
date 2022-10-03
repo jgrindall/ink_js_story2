@@ -35,7 +35,8 @@ export const solarizedDarkTheme = EditorView.theme(
   {
     '&': {
       color: base05,
-      backgroundColor: background
+      backgroundColor: background,
+      'font-family': "Bamburgh"
     },
     '.cm-gutterElement > span':{
         display: 'none'
