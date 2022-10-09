@@ -1,5 +1,5 @@
 <template>
-    <div class="text" ref="elRef">
+    <div class="text" :class="getClass" ref="elRef">
         <div class="content" v-for="content in item.contents">
             <span
                 class="text"
@@ -23,26 +23,32 @@
 
     import type {PropType, Ref} from 'vue';
     import type {Text, TextLinkContent} from "../types/types";
-    import {ref} from "vue";
+    import {ref, computed} from "vue";
 
     const elRef:Ref<HTMLElement | null> = ref(null);
+
+    const getClass = computed(()=>{
+        return {
+            "disabled": props.chosenIndex >= 0
+        };
+    });
     
     const props = defineProps({
         item:  {
             type: Object as PropType<Text>,
             required: true
         },
-        last:{
-            type:Boolean,
-            required:false
+        chosenIndex:{
+            type: Number,
+            required: true
         }
     })
 
     const emit = defineEmits(['divert']);
 
     const onClickContents = (content: TextLinkContent)=>{
-        if(props.last){
-            emit('divert', content.choiceIndex, elRef.value);
+        if(props.chosenIndex === -1){
+            emit('divert', props.item.id, content.choiceIndex, elRef.value);
         }
     };
 
@@ -62,6 +68,8 @@
             line-height: 1.666em;
             width: 100%;
             .button{
+                padding-top:6px;
+                padding-bottom: 6px;
                 padding-left: 20px;
                 padding-right:20px;
                 border:1px dashed #ccc;
@@ -71,12 +79,9 @@
                 }
             }
         }
-        &:not(.last){
-            .button{
-                background-color: black !important;
-                pointer-events: none;
-                opacity: 0.2;
-            }
+        &.disabled{
+            opacity: 0.95;
+            filter: grayscale(0.8);
         }
     }
 </style>

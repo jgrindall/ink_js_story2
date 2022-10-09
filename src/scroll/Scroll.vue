@@ -1,5 +1,4 @@
 <template>
-
     <div ref="elRef" class="mm-scroll-wrapper">
         <div
             v-for="item in items"
@@ -7,8 +6,7 @@
             class="mm-scroll-item"
             :id="'' + item.id"
             :class="{
-                'mm-scroll-visible': getEntry(item.id)?.visible,
-                'mm-scroll-partial': getEntry(item.id)?.partial
+                'mm-scroll-visible': getEntry(item.id)?.visible
             }"
         >    
             <slot :item="item"></slot>
@@ -20,32 +18,40 @@
 <script lang="ts">
     type Entry = {
         el:HTMLElement | null,
-        visibleTimestamp: null | number, // time at which it should show
+        id: number, // required
         visible: boolean, // is it shown?
-        partialTimestamp: null | number, // time at which it should show
-        partial: boolean, // is it shown?
-        id: number // required
+        visibleTimestamp: null | number, // time at which it should show       
     };
 </script>
 
 <script lang="ts" setup>
 
     import { ref, onMounted, onBeforeUnmount, watchEffect } from 'vue'
-    import {getOverlapPercentEl, getAddedNodes, getRemovedNodes} from "../utils/Utils";
+    import {getAddedNodes, getRemovedNodes} from "../utils/Utils";
     import type { Ref, PropType  } from 'vue'
-    import { debounce, difference, uniq, max, compact } from 'underscore';
-    import type {HasId, IScroll} from "../types/types";
+    import {max, compact } from 'underscore';
+    import type {HasId} from "../types/types";
     import easyScroll from 'easy-scroll';
+    import useCounter from './scrollTo';
 
     const elRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
     const mapIdToEntry:Ref< Record<number, Entry>> = ref({});
     const scrollingActive: Ref<Boolean> = ref(false);
+    
     let interval:number;
-
-    // are these rectaive? they shouldnt be
     let mutationObserver: MutationObserver;
-    //let resizeObserver: ResizeObserver;
     let intersectionObsever: IntersectionObserver;
+
+    const { add, get } = useCounter(
+      7
+    );
+
+    add();
+    //alert(get());
+
+    const min = (as:number[])=>{
+        return as.reduce((a, b) => Math.min(a,b), Infinity);
+    };
 
     const props = defineProps({
        items:  {
@@ -57,13 +63,13 @@
            // how fast elements appear (one by one)
            type:Number,
            required: false,
-           default:250
+           default:150
        },
        scrollSpeed:{
            // how fast relevant elements scroll into view
            type:Number,
            required: false,
-           default:500
+           default:750
        },
        overlapPercent:{
            // how to detect whether an element is visible or not
@@ -78,14 +84,11 @@
     /**
      * update the value of visible on each entry
      */
-    const updateVisibility = () => {
+     const updateVisibility = () => {
         const now = Date.now();
         Object.values(mapIdToEntry.value).forEach((entry:Entry)=>{
             if(!entry.visible && entry.visibleTimestamp){
                 entry.visible = entry.visibleTimestamp <= now;
-            }
-            if(!entry.partial && entry.partialTimestamp){
-                entry.partial = entry.partialTimestamp <= now;
             }
         })
         if(interval){
@@ -114,53 +117,17 @@
         }
         scrollingActive.value = true;
         easyScroll({
-            'scrollableDomEle':el,
-            'direction': 'bottom',
-            'duration':props.scrollSpeed,
-            'easingPreset': 'easeOutCubic',
-            'scrollAmount': top - el.scrollTop,
-            'onAnimationCompleteCallback': ()=>{
+            scrollableDomEle:el,
+            direction: 'bottom',
+            duration:props.scrollSpeed,
+            easingPreset: 'easeInQuad',
+            scrollAmount: top - el.scrollTop,
+            onAnimationCompleteCallback: ()=>{
                 setTimeout(()=>{
                     scrollingActive.value = false;
                 });
             }
         });
-    };
-
-    const update = ()=>{
-
-        const updateUsing = (percent:number, t1:'visible' | 'partial', t2: 'visibleTimestamp' | 'partialTimestamp')=>{
-            const startDates = compact(Object.values(mapIdToEntry.value).map(obj => obj[t2]));
-            const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
-            let startDate = Math.max(Date.now(), maxStartDate);
-            
-            const canAddTimestamp = (entry:Entry) => !entry[t2] && !entry[t1];
-            
-            // entries that are visible now
-            let entriesThatBecameVisible = Object.values(mapIdToEntry.value)
-                .filter(entry => canAddTimestamp(entry) && isElemVisible(entry.el, percent));
-            
-            if(entriesThatBecameVisible.length >= 1){
-                // if entry 6,7,8 are visible, we make visible elements 0,1,2,3,4,5 as well, so we do not leave gaps
-                let previousEntriesToMakeVisible = Object.values(mapIdToEntry.value)
-                    .filter(entry => canAddTimestamp(entry) && entry.id < entriesThatBecameVisible[0].id);
-
-                entriesThatBecameVisible = uniq(entriesThatBecameVisible);
-                previousEntriesToMakeVisible = difference(uniq(previousEntriesToMakeVisible), entriesThatBecameVisible);
-
-                // elements 0-5 become visible immediately
-                previousEntriesToMakeVisible.forEach(entry => entry[t2] = startDate);
-
-                // the elements that just became visible get staggered times
-
-                entriesThatBecameVisible.forEach( (entry:Entry, i:number) =>{
-                    entry[t2] = startDate + props.speed*i;
-                });
-            }
-        };
-
-        updateUsing(props.overlapPercent, "visible", "visibleTimestamp");
-        updateUsing(0.01, "partial", "partialTimestamp");
     };
 
     watchEffect(() => {
@@ -177,11 +144,9 @@
         else{
             mapIdToEntry.value[id] = {
                 el:el || null,
-                visibleTimestamp: null,
+                id,
                 visible: false,
-                partialTimestamp: null,
-                partial: false,
-                id
+                visibleTimestamp: null
             };
         }
         if(el){
@@ -200,89 +165,131 @@
     /**
      * when children appear, update the visibility
      */
-    let onChildren = (mutations : MutationRecord[])=>{
+    const onChildrenChanged = (mutations : MutationRecord[])=>{
         const nodesAdded = getAddedNodes(mutations);
         const nodesRemoved = getRemovedNodes(mutations);
-        
-        console.log(nodesAdded.length + " nodesAdded");
-        console.log(nodesRemoved.length + " nodesRemoved");
-
         nodesAdded.forEach((el:HTMLElement)=>{
             addId(parseInt(el.id), el);
         });
         nodesRemoved.forEach((el:HTMLElement)=>{
             removeId(parseInt(el.id));
         });
-        update();
+    };
+
+    const visible:Record<number, boolean> = {};
+
+    /**
+     when elements move into viewport, update visibility
+     */
+     const onIntersectChanged = (intersectionEntries : IntersectionObserverEntry[])=>{
+        
+        const toMakeVisible:Entry[] = [];
+        const minRatio = 0.1;
+    
+        intersectionEntries.forEach(intersectionEntry=>{
+            visible[parseInt(intersectionEntry.target.id)] = intersectionEntry.isIntersecting;
+            const entry = getEntry(parseInt(intersectionEntry.target.id))
+            if(entry){
+                if(!entry.visible && intersectionEntry.intersectionRatio >= minRatio){
+                    toMakeVisible.push(entry);
+                }
+            }
+        });
+
+        if(toMakeVisible.length >= 1){
+            const startDates = compact(Object.values(mapIdToEntry.value).map(obj => obj.visibleTimestamp));
+            const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
+            let startDate = Math.max(Date.now(), maxStartDate);
+            const ids = toMakeVisible.map(entry=>entry.id);
+            const minId = min(ids);
+            let lastItemVisible:HasId | undefined = undefined;
+            let prevVisible: Entry[] = Object.values(mapIdToEntry.value).filter(entry => entry.id < minId);
+
+            toMakeVisible.forEach((entry:Entry, i:number)=>{
+                if(!entry.visibleTimestamp){
+                    entry.visibleTimestamp = startDate + props.speed*i;
+                    lastItemVisible = entry;
+                }
+            });
+
+            prevVisible.forEach((entry:Entry)=>{
+                if(!entry.visibleTimestamp){
+                    entry.visibleTimestamp = startDate;
+                }
+            });
+        }
+
+        const visibleIds = Object.keys(visible)
+            .filter(id => visible[parseInt(id)])
+            .map(id=> parseInt(id));
+        visibleIds.sort();
+        emit('items-visible', visibleIds);
+    };
+
+    let handleScroll = ()=>{
+        let el = elRef.value as HTMLElement;
+        const max =  el.scrollHeight - el.clientHeight;
+        const progress = el.scrollTop/max;
+        emit('scroll', progress);
     };
 
     onMounted(()=>{
         let el = elRef.value as HTMLElement;
         el.addEventListener("scroll", handleScroll);
+        
         // listen to children being added
-        mutationObserver = new MutationObserver(onChildren);
+        mutationObserver = new MutationObserver(onChildrenChanged);
         mutationObserver.observe(el, {
             childList: true,
             attributes:true,
-            subtree:true
+            subtree:false
         });
-        // listen to window resize
-        //resizeObserver = new ResizeObserver(update);
-        //resizeObserver.observe(el);
-        //
-        const handleIntersect = (entries:IntersectionObserverEntry[])=>{
-            entries.forEach(entry=>{
-                console.log(entry);
-            });
-        };
-        intersectionObsever = new IntersectionObserver(handleIntersect, {
+
+        //listen to scrolling
+        intersectionObsever = new IntersectionObserver(onIntersectChanged, {
             root: elRef.value,
-            threshold: [0, 0.5, 1.0]
+            threshold: [
+                0,
+                0.1,
+                0.5,
+                0.9,
+                1.0
+            ]
         });
+      
         // begin updating each frame
         interval = requestAnimationFrame(updateVisibility);
-        setTimeout(update);
     });
 
     /**
      * remove listeners
      */
     onBeforeUnmount(() => {
-        elRef.value?.removeEventListener("scroll", handleScroll);
         cancelAnimationFrame(interval);
         mutationObserver.disconnect();
-        //resizeObserver.disconnect();
+        intersectionObsever.disconnect();
+        elRef.value?.removeEventListener("scroll", handleScroll);
     });
 
-    /**
-     * Helper function
-     * @param el
-     */
-    const isElemVisible = (el: HTMLElement | null, percent:number): boolean => {
-        if(!el){
-            return false;
-        }
-        const overlapPercent = elRef.value ? getOverlapPercentEl(el, elRef.value as HTMLElement) : 0;
-        return overlapPercent >= percent;
-    };
-
-    let handleScroll = debounce(update, props.speed);
-
     const showAll = ()=>{
+        const now = Date.now();
         Object.values(mapIdToEntry.value)
             .forEach((entry:Entry)=>{
                 entry.visible = true;
-                entry.partial = true;
+                entry.visibleTimestamp = now;
             });
     };
 
-    const _expose:IScroll = {
+    const emit = defineEmits([
+        'scroll',
+        'items-visible'
+    ]);
+
+    defineExpose({
         scrollToPosition,
         scrollToEnd,
         showAll
-    };
-
-    defineExpose(_expose)
+    })
 
 </script>
 
@@ -294,15 +301,19 @@
         height:100%;
         left:0;
         overflow-y: auto;
+        overflow-x: hidden;
         .mm-scroll-item{
             opacity: 0;
             -webkit-transition: opacity 0.5s ease-in-out;
             transition: opacity 0.5s ease-in-out;
-            &.mm-scroll-partial{
-                opacity: 0.1;
-            }
             &.mm-scroll-visible{
                 opacity: 1;
+            }
+            &:nth-child(n + 2){
+                margin-top:20px;
+            }
+            &:nth-child(n + 1){
+                margin-bottom:20px;
             }
         }
     }

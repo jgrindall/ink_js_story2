@@ -10,6 +10,7 @@
             }"
         >    
             <slot :item="item"></slot>
+            <span>id = {{item.id}}</span>
         </div>
     </div>
 
@@ -169,16 +170,20 @@
         });
     };
 
+    const visible:Record<number, boolean> = {};
+
     /**
      when elements move into viewport, update visibility
      */
      const onIntersectChanged = (intersectionEntries : IntersectionObserverEntry[])=>{
+        
+        console.log('onIntersectChanged', intersectionEntries.map(e=>"" + e.target.id + " " + e.intersectionRatio + " " + e.isIntersecting));
 
         const toMakeVisible:Entry[] = [];
-    
         const minRatio = 0.1;
     
         intersectionEntries.forEach(intersectionEntry=>{
+            visible[parseInt(intersectionEntry.target.id)] = intersectionEntry.isIntersecting;
             const entry = getEntry(parseInt(intersectionEntry.target.id))
             if(entry){
                 if(!entry.visible && intersectionEntry.intersectionRatio >= minRatio){
@@ -187,25 +192,36 @@
             }
         });
 
-        if(toMakeVisible.length === 0){
-            return;
+        if(toMakeVisible.length >= 1){
+            const startDates = compact(Object.values(mapIdToEntry.value).map(obj => obj.visibleTimestamp));
+            const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
+            let startDate = Math.max(Date.now(), maxStartDate);
+            const ids = toMakeVisible.map(entry=>entry.id);
+            const minId = min(ids);
+            let lastItemVisible:HasId | undefined = undefined;
+            let prevVisible: Entry[] = Object.values(mapIdToEntry.value).filter(entry => entry.id < minId);
+
+            toMakeVisible.forEach((entry:Entry, i:number)=>{
+                if(!entry.visibleTimestamp){
+                    entry.visibleTimestamp = startDate + props.speed*i;
+                    lastItemVisible = entry;
+                }
+            });
+
+            prevVisible.forEach((entry:Entry)=>{
+                if(!entry.visibleTimestamp){
+                    entry.visibleTimestamp = startDate;
+                }
+            });
         }
 
-        const startDates = compact(Object.values(mapIdToEntry.value).map(obj => obj.visibleTimestamp));
-        const maxStartDate = startDates.length >= 1 ? max(startDates) + props.speed : -1;
-        let startDate = Math.max(Date.now(), maxStartDate);
+        console.log(visible);
 
-        const ids = toMakeVisible.map(entry=>entry.id);
-        const minId = min(ids);
-        const prevVisible: Entry[] = Object.values(mapIdToEntry.value).filter(entry => entry.id < minId);
-
-        prevVisible.forEach((entry:Entry)=>{
-            entry.visibleTimestamp = startDate;
-        });
-
-        toMakeVisible.forEach((entry:Entry, i:number)=>{
-            entry.visibleTimestamp = startDate + props.speed*i;
-        });
+        const visibleIds = Object.keys(visible)
+            .filter(id => visible[parseInt(id)])
+            .map(id=> parseInt(id));
+        visibleIds.sort();
+        emit('items-visible', visibleIds);
     };
 
     let handleScroll = ()=>{
@@ -231,11 +247,12 @@
             threshold: [
                 0,
                 0.1,
+                0.5,
                 0.9,
                 1.0
             ]
         });
-        
+      
         // begin updating each frame
         interval = requestAnimationFrame(updateVisibility);
     });
@@ -258,7 +275,10 @@
             });
     };
 
-    const emit = defineEmits(['scroll']);
+    const emit = defineEmits([
+        'scroll',
+        'items-visible'
+    ]);
 
     defineExpose({
         scrollToPosition,

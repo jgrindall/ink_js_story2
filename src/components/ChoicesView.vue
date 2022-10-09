@@ -1,9 +1,10 @@
 <template>
-   <div class="choices" ref="elRef">
-      <div class="choice" v-for="choice in item.choices" @click="onClickContents(choice)">
+   <div class="choices" :class="getClass" ref="elRef">
+      <div class="choice" v-for="(choice, i) in item.choices" @click="onClickContents(choice)">
          <p>
-            Choice: {{choice.text}} {{last}}
+            Choice: {{choice.text}}
          </p>
+         <span class="blob" v-if="i === chosenIndex"></span>
       </div>
    </div>
 </template>
@@ -11,9 +12,8 @@
 <script lang="ts" setup>
 
    import type {PropType, Ref} from 'vue'; 
-   import { computed } from 'vue';
    import type {Choices, Choice} from "../types/types";
-   import {ref} from "vue";
+   import {ref, computed} from "vue";
    
    const elRef:Ref<HTMLElement | null> = ref(null);
 
@@ -22,17 +22,30 @@
          type: Object as PropType<Choices>,
          required: true
       },
-      last:{
-         type:Boolean,
-         required:false
+      chosenIndex:{
+         type: Number,
+         required: true
       }
    });
 
-   const emit = defineEmits(['divert', 'disable']);
+   const isDisabled = computed(():boolean=>{
+        return props.chosenIndex >= 0;
+   });
+   
+   const getClass = computed(()=>{
+        return {
+            "disabled": isDisabled.value
+        };
+    });
+
+   const emit = defineEmits([
+      'divert',
+      'disable'
+   ]);
 
    const onClickContents = (choice:Choice)=>{
-      if(props.last){
-         emit('divert', choice.choiceIndex, elRef.value);
+      if(props.chosenIndex === -1){
+         emit('divert', props.item.id, choice.choiceIndex, elRef.value);
       }
    };
 
@@ -40,9 +53,9 @@
 
 <style lang="scss" scoped>
    .choices{
-      &:not(.last){
-         display: none;
-         background-color: green;
+      &.disabled{
+         opacity: 0.95;
+         filter: grayscale(0.8);
       }
       .choice{
          position: relative;
@@ -52,19 +65,27 @@
          text-align: center;
          border:1px dashed #ccc;
          margin-bottom:12px;
-
          font-family: "Bamburgh", Georgia, "Times New Roman", Times, serif;
          color:#ccc;
-
          &:hover{
-            p{
-               background: #222;
-            }
+            background: rgba(200,200,200,0.25);
          }
          p{
-            margin:4px;
-            padding:4px;
+            margin:8px;
+            padding:6px;
          }
+      }
+      .blob{
+         $size:20px;
+         width:$size;
+         height:$size;
+         border-radius: 50%;
+         background: white;
+         position: absolute;
+         right: 10px;
+         top: 50%;
+         margin-top: -1 * calc($size / 2);
+
       }
    }
 </style>

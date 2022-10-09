@@ -101,7 +101,7 @@ $names: "fading", "banana", "orange", "pear", "grape";
 }
 
 
-$bk-scrollbar-width: 24px;
+$bk-scrollbar-width: 16px;
 
 ::-webkit-scrollbar {
     width: $bk-scrollbar-width;
@@ -113,7 +113,7 @@ $bk-scrollbar-width: 24px;
 }
 
 ::-webkit-scrollbar-thumb {
-    border-radius: $bk-scrollbar-width/2;
+    border-radius: calc($bk-scrollbar-width/2);
     background: rgba(150,150,150, 0.25);
     -webkit-box-shadow: none;
     box-shadow: none;
@@ -136,6 +136,41 @@ $bk-scrollbar-width: 24px;
     width: 50vw;
     shape-outside: polygon(100% 10.42%, 96.46% 16.79%, 90.11% 24.58%, 83.16% 33.69%, 78.54% 41.61%, 74.4% 49.26%, 70.84% 58.13%, 69.07% 65.42%, 68.78% 72.17%, 89.76% 78.97%, 72.36% 85.14%, 77.15% 91.55%, 83.82% 96.79%, 92.05% 99.5%, 99.42% 99.51%, 7px 98.41%, 2.41% 0.11%, 100.02% 0.23%);
 
+}
+
+button{
+    cursor: pointer;
+    font-family: "Bamburgh";
+    border: 1px dashed #ccc;
+    background: rgba(200, 200, 200, 0.1);
+    color: white;
+    &.down{
+        position: fixed;
+        bottom:10px;
+        right:10px;
+        z-index: 1000;
+        opacity: 0;
+        -webkit-transition: opacity 0.5s ease-in-out;
+        transition: opacity 0.5s ease-in-out;
+        padding: 10px;
+        padding-top: 5px;
+        padding-bottom: 5px;
+        padding-left: 11px;
+        >div{
+            font-size: 150%;
+            transform: scale(0.75);
+            span{
+                display: block;
+                transform: scale(2, 0.75);
+            }
+        }
+        &:hover{
+            background: rgba(200,200,200,0.25);
+        }
+        &.showDown{
+            opacity: 1;
+        }
+    }
 }
 
 

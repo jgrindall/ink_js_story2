@@ -4,8 +4,8 @@ import { HighlightStyle, syntaxHighlighting } from '@codemirror/language'
 import { tags as t } from '@lezer/highlight'
 
 
-const base00 = '#002b36',
-  base01 = '#073642',
+const base00 = '#272822',
+  base01 = '#272822',
   base02 = '#586e75',
   base03 = '#657b83',
   base04 = '#839496',
@@ -23,7 +23,7 @@ const base00 = '#002b36',
 
 const invalid = '#d30102',
   stone = base04,
-  darkBackground = '#00252f',
+  darkBackground = '#272822',
   highlightBackground = '#173541',
   background = base00,
   tooltipBackground = base01,

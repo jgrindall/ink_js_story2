@@ -1,7 +1,13 @@
+import { SectionType, TextContentType } from "./enums"
+
 export interface IScroll{
     showAll:()=>void,
     scrollToPosition:(top:number)=>void,
     scrollToEnd:()=>void
+}
+
+export interface ICanvas{
+    update:(a:any)=>void
 }
 
 export type Choice  = {
@@ -12,42 +18,43 @@ export type Choice  = {
 export type Choices = {
     choices:Choice[]
     id:number,
-    type:"choices"
+    tags?:any,
+    type:SectionType.CHOICES
 }
 
 export type TextPlainContent = {
     text:string,
-    type: "text"
+    type: TextContentType.TEXT
 };
 
 export type TextLinkContent = {
     value:string,
     choiceIndex:number,
-    type: "link",
+    type: TextContentType.LINK,
     text:string
 };
 
 export type TextContent = TextLinkContent | TextPlainContent;
 
 export type Text = {
-    tags: Tags,
     contents: TextContent[],
     id:number,
-    type:"text"
+    tags?:any,
+    type:SectionType.TEXT
 }
 
 export type Image = {
-    type:"image",
+    type:SectionType.IMAGE,
     id:number,
-    tags:Tags,
+    tags?:any,
     src:string,
     className?:string
 };
 
 export type Code = {
-    type:"code",
+    type:SectionType.CODE,
     id:number,
-    tags:Tags,
+    tags?:any,
     file:string,
     choices:Choices
 };
@@ -55,29 +62,18 @@ export type Code = {
 export type Section = Text | Image | Code | Choices;
 
 export type StoryState = {
-    sections: Section[]
+    sections: Section[],
+    choices:any
 }
 
 export type StoryContinueEvent = {
     data:StoryData
 };
 
-export type Tags = Partial<{
-    effects: string[],
-    delay: number
-}>;
-``
 export type StoryData = {
     sections:Section[],
     variables: any;
-    tags:any;
 };
-
-export type Item = {
-    id:number,
-    name:string,
-    email:string
-}
 
 export interface HasId{
     id:number
@@ -85,5 +81,11 @@ export interface HasId{
 
 export type SaveData = {
     sections:Section[],
+    choices:any,
     storyJSON:string
+};
+
+export interface IStoryParser{
+    parseSections(sections: Section[], currentChoices:{text:string}[]):Section[]
+    parseSection(text: string):Section
 };

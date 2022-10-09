@@ -1,13 +1,15 @@
 import { defineStore } from 'pinia'
-import {StoryManager} from "./StoryManager";
+import {StoryManager} from "../StoryManager";
 import type {SaveData, StoryContinueEvent, StoryState, Section} from "../types/types";
+import StoryParser from '../StoryParser';
 
 let storyManager: StoryManager;
 
 export const useStore = defineStore('Story', {
     state: (): StoryState => {
         return {
-            sections:[]
+            sections:[],
+            choices:{}
         }
     },
     getters: {
@@ -23,18 +25,13 @@ export const useStore = defineStore('Story', {
                 })
                 .then((content: Object) => {
                     if(content){
-                        storyManager = new StoryManager(content);
+                        storyManager = new StoryManager(content, new StoryParser());
                         storyManager.on("data", (event:StoryContinueEvent)=>{
-
-                            console.log("tags", event.data.tags);
-
-                            const items = event.data.sections;
-                            const currentText = this.sections.filter(e=>e.type !== "choices");
-                            const newText = items.filter(e=>e.type !== "choices");
-                            const newChoices = items.filter(e=>e.type === "choices");
-
+                            const sections = event.data.sections;
+                            const newText = sections.filter(e=>e.type !== "choices");
+                            const newChoices = sections.filter(e=>e.type === "choices");
                             this.sections = [
-                                ...currentText,
+                                ...this.sections,
                                 ...newText,
                                 ...newChoices
                             ];
@@ -47,11 +44,12 @@ export const useStore = defineStore('Story', {
             window.localStorage.removeItem("story");
         },
         saveJSON(){
-            const sections = this.sections;
-            const storyJSON = storyManager.storyToJSON();
             const data:SaveData = {
-                sections,
-                storyJSON
+                sections: this.sections,
+                choices:{
+
+                },
+                storyJSON: storyManager.storyToJSON()
             };
             const dataStr = JSON.stringify(data);
             window.localStorage.setItem("story", dataStr);
@@ -62,7 +60,8 @@ export const useStore = defineStore('Story', {
             this.sections = data.sections;
             storyManager.setStoryJSON(data.storyJSON);
         },
-        divert(choiceIndex:number){
+        divert(itemId:string, choiceIndex:number){
+            this.choices[itemId] = choiceIndex;
             storyManager.chooseIndex(choiceIndex);
         },
         continue(){
