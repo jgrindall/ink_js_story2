@@ -47,30 +47,14 @@
     const showDown = ref<boolean>(false);
 
     const onScroll = (progress: number)=>{
-        showDown.value = (progress < 1);
+        emit("progress", progress);
     };
 
     const onItemsVisible = (ids:number[])=>{
-        const midpoint = ids[Math.floor(ids.length/2)];
-        ids.sort((a:number, b:number)=>{
-            const da = Math.abs(a - midpoint);
-            const db = Math.abs(b - midpoint);
-            return da < db ? -1 : (da > db ? 1 : 0);    
-        });
-        for(let i = 0; i < ids.length; i++){
-            let id = ids[i];
-            const item = props.sections.find(item=>item.id === id);
-            if(typeof(item) !== "undefined"){
-                const tags = (item as any).tags;
-                if(tags && tags.type === "bg"){
-                    emit('tag-hit', tags);                    
-                    break;
-                } 
-            }
-        }
+        emit("items-visible", ids);
     };
 
-    const down = ()=>{
+    const scrollToEnd = ()=>{
         scroll.value?.scrollToEnd();
     };
    
@@ -98,7 +82,16 @@
         });
     };
 
-    const emit = defineEmits(['divert', 'tag-hit', 'progress']);
+    const emit = defineEmits([
+        'divert',
+        'tag-hit',
+        'progress',
+        'items-visible'
+    ]);
+
+    defineExpose({
+        scrollToEnd
+    });
 
 </script>
 

@@ -32,8 +32,7 @@
     import {max, compact } from 'underscore';
     import type {HasId} from "../types/types";
     import easyScroll from 'easy-scroll';
-    import useCounter from './scrollTo';
-
+    
     const elRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
     const mapIdToEntry:Ref< Record<number, Entry>> = ref({});
     const scrollingActive: Ref<Boolean> = ref(false);
@@ -41,13 +40,6 @@
     let interval:number;
     let mutationObserver: MutationObserver;
     let intersectionObsever: IntersectionObserver;
-
-    const { add, get } = useCounter(
-      7
-    );
-
-    add();
-    //alert(get());
 
     const min = (as:number[])=>{
         return as.reduce((a, b) => Math.min(a,b), Infinity);
@@ -202,13 +194,11 @@
             let startDate = Math.max(Date.now(), maxStartDate);
             const ids = toMakeVisible.map(entry=>entry.id);
             const minId = min(ids);
-            let lastItemVisible:HasId | undefined = undefined;
             let prevVisible: Entry[] = Object.values(mapIdToEntry.value).filter(entry => entry.id < minId);
 
             toMakeVisible.forEach((entry:Entry, i:number)=>{
                 if(!entry.visibleTimestamp){
                     entry.visibleTimestamp = startDate + props.speed*i;
-                    lastItemVisible = entry;
                 }
             });
 
@@ -222,7 +212,11 @@
         const visibleIds = Object.keys(visible)
             .filter(id => visible[parseInt(id)])
             .map(id=> parseInt(id));
-        visibleIds.sort();
+        visibleIds.sort((a:number, b:number)=>{
+            const da = parseInt(a);
+            const db = parseInt(b);
+            return da < db ? -1 : (da > db ? 1 : 0);    
+        });
         emit('items-visible', visibleIds);
     };
 
