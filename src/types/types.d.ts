@@ -66,6 +66,19 @@ export type StoryState = {
     choices:any
 }
 
+export type UIState = {
+    progress:number,
+    color:string
+}
+
+export type CodeFile = {
+    contents: string
+};
+
+export type CodeState = {
+    files: Record<string, CodeFile>   
+}
+
 export type StoryContinueEvent = {
     data:StoryData
 };
