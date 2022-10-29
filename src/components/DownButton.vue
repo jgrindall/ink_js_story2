@@ -1,33 +1,26 @@
 <template>
-    <div class="blobs">
-        <span class="blob blob1"></span>
-        <span class="blob blob2"></span>
-        <span class="blob blob3"></span>
-    </div>
+     <button class="down" :class="{'show': show}" @click="down">
+        <div>
+            <span>V</span>
+        </div>
+    </button>
 </template>
 
 <script lang="ts" setup>
 
+    const props = defineProps({
+        'show':{
+
+        }
+    });
+
 </script>
 
 <style lang="scss" scoped>
-    .blobs{
-        display: flex;
-        align-items: center;
-        gap:6px;
-        .blob{
-            width:16px;
-            height:16px;
-            border-radius: 50%;
-            &.blob1{
-                background: #ff5f56;
-            }
-            &.blob2{
-                background: #ffbd2e;
-            }
-            &.blob3{
-                background: #27c93f;
-            }
+    .down{
+        &.show{
+            opacity: 1;
         }
     }
+    
 </style>
