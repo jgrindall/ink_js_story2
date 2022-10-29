@@ -16,7 +16,6 @@ export const useStore = defineStore('Code', {
     },
     actions:{
         async load(){
-            console.log(this.files);
             const fileModule = await import('../code/code.json');
             const fileData = fileModule.default;
             const files = JSON.parse(JSON.stringify(fileData)) as CodeState["files"];
