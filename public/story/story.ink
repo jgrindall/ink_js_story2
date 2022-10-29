@@ -25,7 +25,7 @@ One day something happened3
 
 One day something happenedGREEN3 %tags\{"type":"bg", "color": "green"\}%
 
-\{"type":"code", "file": "1.py"\}
+\{"type":"code", "file": "file1"\}
  + [True] True -> donecode
  + [False] False -> donecode
  

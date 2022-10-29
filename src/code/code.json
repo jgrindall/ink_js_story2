@@ -1,0 +1,5 @@
+{
+    "file1": {
+        "contents": "a = 1\ndef my_function():\n\tpass\n\n\n\n"
+    }
+}
