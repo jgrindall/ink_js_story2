@@ -5,7 +5,7 @@ function useCounter(num:number){
     const counter:Ref<number> = ref(num);
 
     onMounted(()=>{
-        alert('mounted')
+        
     })
 
     function add(){
