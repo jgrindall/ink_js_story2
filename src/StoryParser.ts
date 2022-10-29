@@ -159,7 +159,6 @@ class StoryParser implements IStoryParser{
             return this.parseJSON(json)
         }
         catch(e){
-            console.log(e);
             //fail, it is a normal ink element
         }
         const extracted = extractTagsFromText(text);
