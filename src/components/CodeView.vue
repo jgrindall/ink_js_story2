@@ -24,18 +24,38 @@
 
     import { onMounted, ref, watch, computed } from 'vue';
     import type {PropType, Ref} from 'vue';
-    import type {Code} from "../types/types";
+    import type {Code, CodeFile} from "../types/types";
     import {python} from "@codemirror/lang-python"
     import {EditorState} from "@codemirror/state"
     import {EditorView, basicSetup} from "codemirror"
     import { myTheme } from './theme';
     import ChoicesView from './ChoicesView.vue';
     import CodeBlobs from './CodeBlobs.vue';
+    import { storeToRefs } from 'pinia'
+    import {useStore as useCodeStore} from '@/stores/Code';
 
+    const codeStore = useCodeStore();
+    const codeStoreRefs = storeToRefs(codeStore);
+    
     const code:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
     const elRef:Ref<HTMLElement | null> = ref(null);
 
     let editorView: EditorView;
+
+    const imports = `import js
+from js import __getUtils
+utils = __getUtils()
+utils.something(4)
+`;
+
+    (window as any).__getUtils = ()=>{
+        return {
+            something: function(s:number){
+                console.log("SOMETHING", s);
+            }
+        }
+    };
+
 
     const props = defineProps({
         item:  {
@@ -45,7 +65,7 @@
         chosenIndex:{
             type: Number,
             required: true
-      }
+        }
     });
 
     const getClass = computed(()=>{
@@ -54,9 +74,26 @@
         };
     });
 
-    onMounted(()=>{
-        const doc = 'a = 1\ndef my_function():\n\tpass\n\n\n\n';
-        
+    const fileContents = computed(():string=>{
+        const codeFile:CodeFile = (codeStoreRefs.allFiles.value || {})[props.item.file];
+        return codeFile?.contents || "";
+    });
+
+    watch(() => fileContents.value, () => {
+        const doc = editorView.state.doc;
+        if(fileContents.value && doc.length === 0){
+            editorView.dispatch({
+                changes: {
+                    from: 0,
+                    to: 0,
+                    insert: fileContents.value
+                }
+            });
+        }
+    });
+
+    onMounted(async ()=>{
+        const doc = "";
         let change = EditorView.updateListener.of((v)=> {
             console.log(v);
             return false;
@@ -80,8 +117,12 @@
 
     });
 
-    const onRun = ()=>{
-        emit('run', props.item.id, elRef.value);
+    const onRun = async ()=>{
+        const doc = editorView.state.doc.toString();
+        const code = imports + '\n' + doc;
+        const pyodideRunner = (window as any).pyodide;
+        await pyodideRunner.runPythonAsync(code);
+        emit('run', props.item.id, doc);
     };
 
     const emit = defineEmits(['run']);
