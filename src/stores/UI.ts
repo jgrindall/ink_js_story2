@@ -10,7 +10,6 @@ export const useStore = defineStore('UI', {
     },
     getters: {
         isAtEnd(state):boolean{
-            console.log(state.progress);
             return state.progress === 1;
         },
         bgColor(state):string{
