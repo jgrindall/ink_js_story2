@@ -8,26 +8,19 @@
 
 <script lang="ts" setup>
 
-    import { ref, computed } from 'vue'
+    import { ref, computed, defineProps } from 'vue'
     import type { Ref } from 'vue'
 
-    const color: Ref<string> = ref('');
-
-    const elRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
-
-    const update = (a:any)=>{
-        console.log(a);
-        color.value = a;
-    };
-
-    const getClass = computed(()=>{
-        console.log(color.value);
-        return color.value;
+    const props = defineProps({
+        'color': {
+            type: String,
+            required: true
+        }
     });
 
-    defineExpose({
-        update
-    })
+    const getClass = computed(()=>{
+        return props.color;
+    });
 
 </script>
 
