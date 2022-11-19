@@ -3,10 +3,10 @@
         <div ref="elRef" class="code-container" :class="getClass">
             <div class="inner">
                 <code-blobs></code-blobs>
-                <div ref="code">
-                </div>
+                <div ref="code"></div>
+                <div class="codeOutput">{{codeOutput}}</div>
             </div>
-            <button class="run" @click="onRun">RUN</button>
+            <button class="run" :disabled="isDisabled" @click="onRun">RUN</button>
         </div>
 
         <choices-view
@@ -24,7 +24,7 @@
 
     import { onMounted, ref, watch, computed } from 'vue';
     import type {PropType, Ref} from 'vue';
-    import type {Code, CodeFile} from "../types/types";
+    import type {Code, CodeFile, CheckDefn} from "../types/types";
     import {python} from "@codemirror/lang-python"
     import {EditorState} from "@codemirror/state"
     import {EditorView, basicSetup} from "codemirror"
@@ -33,7 +33,7 @@
     import CodeBlobs from './CodeBlobs.vue';
     import { storeToRefs } from 'pinia'
     import {useStore as useCodeStore} from '@/stores/Code';
-
+    import CodeChecker from '@/code/CodeChecker';
     const codeStore = useCodeStore();
     const codeStoreRefs = storeToRefs(codeStore);
     
@@ -42,20 +42,7 @@
 
     let editorView: EditorView;
 
-    const imports = `import js
-from js import __getUtils
-utils = __getUtils()
-utils.something(4)
-`;
-
-    (window as any).__getUtils = ()=>{
-        return {
-            something: function(s:number){
-                console.log("SOMETHING", s);
-            }
-        }
-    };
-
+    const codeOutput:Ref<string> = ref("");
 
     const props = defineProps({
         item:  {
@@ -77,6 +64,11 @@ utils.something(4)
     const fileContents = computed(():string=>{
         const codeFile:CodeFile = (codeStoreRefs.allFiles.value || {})[props.item.file];
         return codeFile?.contents || "";
+    });
+
+    const fileChecks = computed(():CheckDefn[]=>{
+        const codeFile:CodeFile = (codeStoreRefs.allFiles.value || {})[props.item.file];
+        return codeFile?.checks || [];
     });
 
     watch(() => fileContents.value, () => {
@@ -118,11 +110,15 @@ utils.something(4)
     });
 
     const onRun = async ()=>{
-        const doc = editorView.state.doc.toString();
-        const code = imports + '\n' + doc;
-        const pyodideRunner = (window as any).pyodide;
-        await pyodideRunner.runPythonAsync(code);
-        emit('run', props.item.id, doc);
+        if(isDisabled.value){
+            return;
+        }
+        const doc = editorView.state.doc.toString();       
+        const checker = new CodeChecker(doc, (s:any)=>{
+            codeOutput.value += s;
+        }, fileChecks.value);
+        const success = await checker.check();
+        emit('run', props.item.id, code.value, success);
     };
 
     const emit = defineEmits(['run']);
@@ -143,18 +139,29 @@ utils.something(4)
 </script>
 
 <style lang="scss" scoped>
-    $topHeight:24px;
+    $topHeight:30px;
+    $bottomHeight: 120px;
     $padding: 20px;
+    $totalHeight:500px;
     .code{
-        height: 200px;
+        height: 300px;
         width: 100%;
+    }
+    .codeOutput{
+        background: rgba(200,200,200,0.2);
+        height: $bottomHeight;
+        position: absolute;
+        bottom:0;
+        left:0;
+        width:100%;
+        font-family: monospace, 'Courier New', Courier;
     }
 
     .code-container{
         border-radius: 10px;
         position: relative;
         max-width: 1600px;
-        height: 300px;
+        height: $totalHeight;
         margin: auto;
         box-sizing: border-box;
         box-shadow: 0 0 20px rgb(0 0 0 / 20%);
@@ -170,8 +177,8 @@ utils.something(4)
                 overflow-y: auto;
                 width:100%;
                 position: absolute;
-                height: calc(100% - $topHeight);
-                bottom:0;
+                height: calc(100% - $topHeight - $bottomHeight);
+                bottom:$bottomHeight;
                 left:0;
                 .cm-editor{
                     position: absolute;
@@ -179,7 +186,6 @@ utils.something(4)
                     left:0;
                     width:100%;
                     height: 100%;
-                    font-family:'Bamburgh';
                 }
             }
         }
@@ -198,8 +204,7 @@ utils.something(4)
         position: absolute;
         bottom: 0;
         right: 0;
-        cursor: pointer;
-        font-family: "Bamburgh";
+        font-family: "Leander";
         border: 1px dashed #ccc;
         background: rgba(200, 200, 200, 0.1);
         color: white;

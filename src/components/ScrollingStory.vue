@@ -66,9 +66,10 @@
         return value;
     };
 
-    const run = (itemId:string, element:HTMLElement)=>{
-        //TODO - always True
-        divert(itemId, 0, element);
+    const run = (itemId:string, element:HTMLElement, success:boolean)=>{
+        if(success){
+            divert(itemId, 0, element);
+        }
     };
 
     const divert = (itemId:string, choiceIndex: number, element:HTMLElement)=>{

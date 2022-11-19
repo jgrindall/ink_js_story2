@@ -1,10 +1,24 @@
 <template>
 
-    <div id="toolbar">
-        <button @click="saveJSON">Save</button>
-        <button @click="loadJSON">Load</button>
-        <button @click="clearJSON">Clear</button>
-    </div>
+    <van-nav-bar id="toolbar" title="Title">
+
+        <template #left>
+            <van-icon name="arrow-down" color="#ee0a24" size="1.5rem"/>
+            <van-button size="large" icon="arrow-up" color="#7232dd" type="primary">
+                Primary
+            </van-button>
+            <button @click="saveJSON">Save</button>
+            <button @click="loadJSON">Load</button>
+            <button @click="clearJSON">Clear</button>
+            <van-loading />
+
+        </template>
+
+        <template #right>
+            <van-button color="#7232dd" type="primary">Primary</van-button>
+        </template>
+
+    </van-nav-bar>
 
 </template>
 
@@ -45,5 +59,6 @@
         left: 0;
         background: rgba(200,200,200,0.25);
         width: 100%;
+        font-size: larger;
     }
-</style>    
+</style>

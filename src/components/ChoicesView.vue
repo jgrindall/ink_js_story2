@@ -65,7 +65,7 @@
          text-align: center;
          border:1px dashed #ccc;
          margin-bottom:12px;
-         font-family: "Bamburgh", Georgia, "Times New Roman", Times, serif;
+         font-family: "Leander", Georgia, "Times New Roman", Times, serif;
          color:#ccc;
          &:hover{
             background: rgba(200,200,200,0.25);

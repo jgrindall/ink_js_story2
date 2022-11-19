@@ -1,5 +1,48 @@
 {
     "file1": {
-        "contents": "a = 1\ndef my_function():\n\tpass\n\n\n\n"
+        "contents": "#make a function called is_div that returns true if x is divisible by 7\n\na = 1\ndef is_div(x):\n\tprint('hello')\n\treturn x % 7 == 0\nis_div(10)\nis_div(14)\nprint('hello again')\nprint(utils_module.f(6))",
+        "checks":[
+            {
+                "type": "output",
+                "match":"37"
+            },
+            {
+                "type": "functioncall",
+                "functionname":"is_div",
+                "args":[
+                    7
+                ],
+                "returns":true
+            },
+            {
+                "type": "functioncall",
+                "functionname":"is_div",
+                "args":[
+                    700
+                ],
+                "returns":true
+            },
+            {
+                "type": "functioncall",
+                "functionname":"is_div",
+                "args":[
+                    10
+                ],
+                "returns":false
+            },
+            {
+                "type":"variablevalue",
+                "variablename":"a",
+                "value": 1
+            }
+        ]
+    },
+    "file2":{
+        "contents": "a = 1\ndef my_function():\n\tprint('hello')\n\nmy_function()\nprint('hello again')\nprint(my_js_module.f(6))",
+        "checks":[
+            {
+                "a": 1
+            }
+        ]
     }
 }

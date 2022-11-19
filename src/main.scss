@@ -1,7 +1,11 @@
+:root{
+    --van-font-size-lg: 20px !important;
+    --van-button-primary-color: red;
+}
 
 .mm-scroll-item{
     .text{
-        font-family: "Bamburgh", Georgia, "Times New Roman", Times, serif;
+        font-family: "Leander", Georgia, "Times New Roman", Times, serif;
         color:#ccc;
     }
 }
@@ -187,3 +191,11 @@ button{
     margin:8px;
     font-size:20px;
 }
+
+.van-button.van-button--large{
+    padding:10px;
+    .van-icon{
+        font-size:1.5rem !important;
+    }
+}
+

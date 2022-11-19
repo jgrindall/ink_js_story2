@@ -43,13 +43,20 @@
                 background-position: center center;
             }
         }
+        $img_height:300px;
         &.center{
             text-align: center;
-            height: 200px;
+            height: $img_height;
             width:100%;
+            border-image-slice: 6.8965517241% 7.8636959371% 7.0993914807% 0 fill;
+            border-image-source: url(/images/bg.svg);
+            border-width: 2.125rem 3.75rem 2.1875rem 0;
+            border-style: solid;
+            max-width: 600px;
+            margin: auto;
             > div{
-                width:200px;
-                height:200px;
+                width:$img_height;
+                height:$img_height;
                 margin: auto;
                 background-size: 100% 100%;
             }

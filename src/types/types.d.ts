@@ -71,8 +71,31 @@ export type UIState = {
     color:string
 }
 
+export type OutputCheckDefn = {
+    type: "output",
+    match: any
+} 
+
+export type FunctionCallCheckDefn = {
+    type: "functioncall",
+    args:any[],
+    functionname: string,
+    returns: any
+} 
+
+export type VariableValueCheckDefn = {
+    type: "variablevalue",
+    variablename: string,
+    value: any
+} 
+
+export type CheckDefn = OutputCheckDefn | FunctionCallCheckDefn | VariableValueCheckDefn
+
+export type CheckerFn = ()=>boolean;
+
 export type CodeFile = {
-    contents: string
+    contents: string,
+    checks?:CheckDefn[]
 };
 
 export type CodeState = {
