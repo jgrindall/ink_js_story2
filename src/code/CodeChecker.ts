@@ -1,4 +1,15 @@
-import type {CheckDefn, CheckerFn, FunctionCallCheckDefn, OutputCheckDefn, VariableValueCheckDefn} from "@/types/types";
+import type {CheckDefn, FunctionCallCheckDefn, OutputCheckDefn, VariableValueCheckDefn} from "@/types/types";
+
+let pyodide:any = undefined;
+
+const getPyodide = async()=>{
+    if(pyodide){
+        return pyodide;
+    }
+    const loadPyodide = (window as any).loadPyodide;
+    pyodide = await loadPyodide();
+    return pyodide;
+};
 
 const utils_module = {
     f: function (x:any) {
@@ -21,7 +32,7 @@ abstract class Checker{
     getPythonCode(): string {
         return ``
     }
-    abstract check(output: any[], globals:any):boolean
+    abstract check(output: string[], globals:any):boolean
 }
 
 class FunctionCallChecker extends Checker{
@@ -30,11 +41,11 @@ class FunctionCallChecker extends Checker{
         super();
         this.checkerVarName = '__check_function_calls_' + this.id;
     }
-    check(output: any[], globals:any): boolean {
+    check(output: string[], globals:any): boolean {
         return globals[this.checkerVarName] === this.c.returns;
     }
     getPythonCode(): string {
-        return `${this.checkerVarName} = ${this.c.functionname}(${this.c.args.join(", ")})`
+        return `${this.checkerVarName} = ${this.c.code}})`
     }
 }
 
@@ -43,8 +54,8 @@ class OutputChecker extends Checker{
         super();
     }
     
-    check(output: any[], globals:any): boolean {
-        return false
+    check(output: string[], globals:any): boolean {
+        return output.filter(entry => entry === this.c.match).length >= 1;
     }
     getPythonCode(): string {
         return ``
@@ -55,7 +66,7 @@ class VariableValueChecker extends Checker{
     constructor(private c:VariableValueCheckDefn){
         super();
     }
-    check(output: any[], globals:any): boolean {
+    check(output: string[], globals:any): boolean {
         return globals[this.c.variablename] === this.c.value;
     }
 }
@@ -81,12 +92,11 @@ export default class CodeChecker{
         
         let codeToRun = `import utils_module
 ${this.code}`;
-        
-        const loadPyodide = (window as any).loadPyodide;
-        let pyodide = await loadPyodide();
+        let pyodide = await getPyodide();
         pyodide.registerJsModule("utils_module", utils_module);
         pyodide.globals.set("print", (x:any)=>{
-            output.push(x);
+            const js = x.toJs ? x.toJs() : x;
+            output.push("" + x);
             this.outFn(x);
         });
         const checkers = (this.checks || []).map(getChecker)

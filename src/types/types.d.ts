@@ -78,8 +78,7 @@ export type OutputCheckDefn = {
 
 export type FunctionCallCheckDefn = {
     type: "functioncall",
-    args:any[],
-    functionname: string,
+    code: string,
     returns: any
 } 
 

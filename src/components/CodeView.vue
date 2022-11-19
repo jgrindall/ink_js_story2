@@ -115,7 +115,7 @@
         }
         const doc = editorView.state.doc.toString();       
         const checker = new CodeChecker(doc, (s:any)=>{
-            codeOutput.value += s;
+            codeOutput.value += "" + s + '\n';
         }, fileChecks.value);
         const success = await checker.check();
         emit('run', props.item.id, code.value, success);

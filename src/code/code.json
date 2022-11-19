@@ -1,6 +1,6 @@
 {
     "file1": {
-        "contents": "#make a function called is_div that returns true if x is divisible by 7\n\na = 1\ndef is_div(x):\n\tprint('hello')\n\treturn x % 7 == 0\nis_div(10)\nis_div(14)\nprint('hello again')\nprint(utils_module.f(6))",
+        "contents": "#make a function called is_div that returns true if x is divisible by 7\nprint({\"a\": 1})\na = 1\ndef is_div(x):\n\tprint('hello', 5)\n\tprint(1)\n\treturn x % 7 == 0\nis_div(10)\nis_div(14)\nprint('hello again')\nprint(utils_module.f(6))",
         "checks":[
             {
                 "type": "output",
@@ -8,26 +8,17 @@
             },
             {
                 "type": "functioncall",
-                "functionname":"is_div",
-                "args":[
-                    7
-                ],
+                "code":"is_div(7)",
                 "returns":true
             },
             {
                 "type": "functioncall",
-                "functionname":"is_div",
-                "args":[
-                    700
-                ],
+                "code":"is_div(700)",
                 "returns":true
             },
             {
                 "type": "functioncall",
-                "functionname":"is_div",
-                "args":[
-                    10
-                ],
+                "code":"is_div(10)",
                 "returns":false
             },
             {
