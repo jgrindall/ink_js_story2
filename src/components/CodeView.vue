@@ -33,9 +33,12 @@
     import CodeBlobs from './CodeBlobs.vue';
     import { storeToRefs } from 'pinia'
     import {useStore as useCodeStore} from '@/stores/Code';
+    import {useStore as useUIStore} from '@/stores/UI';
     import CodeChecker from '@/code/CodeChecker';
     const codeStore = useCodeStore();
     const codeStoreRefs = storeToRefs(codeStore);
+
+    const uiStore = useUIStore();
     
     const code:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
     const elRef:Ref<HTMLElement | null> = ref(null);
@@ -117,6 +120,9 @@
         const checker = new CodeChecker(doc, (s:any)=>{
             codeOutput.value += "" + s + '\n';
         }, fileChecks.value);
+        uiStore.setLoading(true)
+        await checker.init();
+        uiStore.setLoading(false)
         const success = await checker.check();
         emit('run', props.item.id, elRef.value, success);
     };

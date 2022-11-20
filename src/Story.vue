@@ -35,11 +35,14 @@
         >
     </down-button>
 
+    <loader/>
+
 </template>
 
 <script lang="ts" setup>
     import Toolbar from "@/components/Toolbar.vue"
     import CanvasView from './components/CanvasView.vue';
+    import Loader from './components/Loader.vue';
     import DownButton from './components/DownButton.vue';
     import {useStore as useStoryStore} from '@/stores/Story';
     import {useStore as useUIStore} from '@/stores/UI';

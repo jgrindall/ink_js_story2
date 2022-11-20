@@ -5,7 +5,8 @@ export const useStore = defineStore('UI', {
     state: (): UIState => {
         return {
             progress:0,
-            color:""
+            color:"",
+            loading: false
         }
     },
     getters: {
@@ -14,9 +15,15 @@ export const useStore = defineStore('UI', {
         },
         bgColor(state):string{
             return state.color;
+        },
+        isLoading(state):boolean{
+            return state.loading
         }
     },
     actions:{
+        setLoading(loading:boolean){
+            this.loading = loading;   
+        },
         setProgress(progress:number){
             this.progress = progress;
         },

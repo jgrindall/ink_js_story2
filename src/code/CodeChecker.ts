@@ -87,6 +87,9 @@ export default class CodeChecker{
         private outFn: (s:any)=>void,
         private checks?:CheckDefn[]){
     }
+    async init(){
+        await getPyodide();
+    }
     async check():Promise<boolean>{
         const output:any[] = [];
         

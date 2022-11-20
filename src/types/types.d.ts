@@ -68,7 +68,8 @@ export type StoryState = {
 
 export type UIState = {
     progress:number,
-    color:string
+    color:string,
+    loading: boolean
 }
 
 export type OutputCheckDefn = {
