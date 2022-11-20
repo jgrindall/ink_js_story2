@@ -2,13 +2,13 @@ import type {CheckDefn, FunctionCallCheckDefn, OutputCheckDefn, VariableValueChe
 
 let pyodide:any = undefined;
 
+const loadPyodide = (window as any).loadPyodide;
+
 const getPyodide = async()=>{
     if(pyodide){
         return pyodide;
     }
-    const loadPyodide = (window as any).loadPyodide;
-    pyodide = await loadPyodide();
-    return pyodide;
+    return await loadPyodide();
 };
 
 const utils_module = {

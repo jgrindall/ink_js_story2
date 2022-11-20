@@ -35,7 +35,7 @@
         >
     </down-button>
 
-    <loader/>
+    <loader v-if="loading"/>
 
 </template>
 
@@ -64,6 +64,7 @@
 
     const isAtEnd:Ref<boolean> = uiStoreRefs.isAtEnd;
     const color:Ref<string> = uiStoreRefs.bgColor;
+    const loading:Ref<boolean> = uiStoreRefs.isLoading;
     const sections:Ref<Section[]> = storyStoreRefs.storyItems;
     const choices:Ref<any> = storyStoreRefs.choices;
     const canvas:Ref<ICanvas | null> = ref(null);

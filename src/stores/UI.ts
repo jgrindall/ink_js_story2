@@ -17,6 +17,7 @@ export const useStore = defineStore('UI', {
             return state.color;
         },
         isLoading(state):boolean{
+            console.log(state);
             return state.loading
         }
     },
