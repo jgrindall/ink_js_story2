@@ -2,8 +2,7 @@
     <scroll
         v-slot="{ item: item }"
         :items="sections"
-        @scroll = "onScroll"
-        @items-visible = "onItemsVisible"
+        v-bind="$attrs"
         ref="scroll"
         >
         <component
@@ -43,16 +42,6 @@
             required: true
         }
     });
-
-    const showDown = ref<boolean>(false);
-
-    const onScroll = (progress: number)=>{
-        emit("progress", progress);
-    };
-
-    const onItemsVisible = (ids:number[])=>{
-        emit("items-visible", ids);
-    };
 
     const scrollToEnd = ()=>{
         scroll.value?.scrollToEnd();

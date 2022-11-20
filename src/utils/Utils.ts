@@ -31,8 +31,13 @@ const getRemovedNodes = (mutations: MutationRecord[]) : HTMLElement[]=>{
     return getAllNodes(mutations, (mutation:MutationRecord)=>mutation.removedNodes);
 };
 
+const min = (as:number[])=>{
+    return as.reduce((a, b) => Math.min(a,b), Infinity);
+};
+
 export {
     id,
+    min,
     count,
     getAddedNodes,
     getRemovedNodes

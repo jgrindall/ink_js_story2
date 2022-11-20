@@ -118,7 +118,7 @@
             codeOutput.value += "" + s + '\n';
         }, fileChecks.value);
         const success = await checker.check();
-        emit('run', props.item.id, code.value, success);
+        emit('run', props.item.id, elRef.value, success);
     };
 
     const emit = defineEmits(['run']);

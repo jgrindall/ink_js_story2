@@ -8,45 +8,51 @@
         :color="color"
         >
     </canvas-view>
-    
-    <scrolling-story
-        :componentFactory="componentFactory"
-        :choices="choices"
-        :sections="sections"
-        :api="api"
-        @divert="onDivert"
-        @items-visible="onItemsVisible"
+
+    <scroll
+        v-slot="{ item: item }"
+        :items="sections"
+        @divert="divert"
         @progress="onProgress"
+        @itemsVisible="onItemsVisible"
         ref="scroll"
         >
-    </scrolling-story>
+        <component
+            class="item"
+            :is="componentFactory(item)"
+            :id="item.id"
+            :item="item"
+            :chosenIndex="getChosenIndex(item)"
+            @divert="divert"
+            @run="run"
+        >
+        </component>
+    </scroll>
 
     <down-button
         :show="!isAtEnd"
-        @click="down"
+        @click="scrollToEnd"
         >
     </down-button>
 
 </template>
 
 <script lang="ts" setup>
-    import ScrollingStory from '@/components/ScrollingStory.vue';
     import Toolbar from "@/components/Toolbar.vue"
     import CanvasView from './components/CanvasView.vue';
-    import { SectionType } from './types/enums';
-    import TextView from './components/TextView.vue';
-    import ImageView from './components/ImageView.vue';
-    import ChoicesView from './components/ChoicesView.vue';
-    import CodeView from './components/CodeView.vue';
     import DownButton from './components/DownButton.vue';
     import {useStore as useStoryStore} from '@/stores/Story';
     import {useStore as useUIStore} from '@/stores/UI';
     import {useStore as useCodeStore} from '@/stores/Code';
     import { storeToRefs } from 'pinia'
-    import {onMounted, ref} from "vue";
+    import {onMounted} from "vue";
     import type { HasId, Section, ICanvas, IScroll } from './types/types';
     import type {Ref} from "vue";
-    
+    import Scroll from "@/scroll/Scroll.vue";
+    import { nextTick, ref } from 'vue';
+    import fac from "@/scroll/fac";
+
+    const { componentFactory } = fac()
     const storyStore = useStoryStore();
     const storyStoreRefs = storeToRefs(storyStore);
     const uiStore = useUIStore();
@@ -60,29 +66,36 @@
     const canvas:Ref<ICanvas | null> = ref(null);
     const scroll:Ref<IScroll | null> = ref(null);
 
-    const components = {
-        [SectionType.CODE]: CodeView,
-        [SectionType.TEXT]: TextView,
-        [SectionType.IMAGE]: ImageView,
-        [SectionType.CHOICES]: ChoicesView
-    };
-
-    const api = ()=>{
-        
-    };
-
-    const componentFactory = (item: HasId):any=>{
-        let type = ((item as unknown) as Section).type;
-        return components[type];
-    };
-
     onMounted(()=>{
         storyStore.load();
         codeStore.load();
     });
 
-    const onDivert = (itemId:any, choiceIndex:number)=>{
+    const getChosenIndex = (item:HasId): number => {
+        const value = choices.value[item.id];
+        return typeof(value) === "undefined" ? -1 : value; 
+    };
+
+    const run = (itemId:string, element:HTMLElement, success:boolean)=>{
+        if(success){
+            divert(itemId, 0, element);
+        }
+    };
+    
+    const scrollToEnd = ()=>{
+        scroll.value?.scrollToEnd();
+    };
+
+    const divert = (itemId:string, choiceIndex: number, element:HTMLElement)=>{
         storyStore.divert(itemId, choiceIndex);
+        const top = element.offsetTop;
+        console.log(element, top);
+        nextTick(()=>{
+            setTimeout(()=>{
+                //move to the one you just clicked on
+                scroll.value?.scrollToPosition(top);
+            });
+        });
     };
 
     const onItemsVisible = (ids:number[])=>{
@@ -107,10 +120,6 @@
 
     const onProgress = (progress: number)=>{
         uiStore.setProgress(progress);
-    };
-
-    const down = ()=>{
-        scroll.value?.scrollToEnd();
     };
     
 </script>

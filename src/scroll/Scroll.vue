@@ -3,9 +3,9 @@
         <div
             v-for="item in items"
             key="id"
-            class="mm-scroll-item"
             :id="'' + item.id"
             :class="{
+                'mm-scroll-item': true,
                 'mm-scroll-visible': getEntry(item.id)?.visible
             }"
         >    
@@ -27,7 +27,7 @@
 <script lang="ts" setup>
 
     import { ref, onMounted, onBeforeUnmount, watchEffect } from 'vue'
-    import {getAddedNodes, getRemovedNodes} from "../utils/Utils";
+    import {getAddedNodes, getRemovedNodes, min} from "../utils/Utils";
     import type { Ref, PropType  } from 'vue'
     import {max, compact } from 'underscore';
     import type {HasId} from "../types/types";
@@ -41,10 +41,6 @@
     let mutationObserver: MutationObserver;
     let intersectionObsever: IntersectionObserver;
 
-    const min = (as:number[])=>{
-        return as.reduce((a, b) => Math.min(a,b), Infinity);
-    };
-
     const props = defineProps({
        items:  {
            // list of items
@@ -55,13 +51,13 @@
            // how fast elements appear (one by one)
            type:Number,
            required: false,
-           default:150
+           default:100
        },
        scrollSpeed:{
            // how fast relevant elements scroll into view
            type:Number,
            required: false,
-           default:750
+           default:500
        },
        overlapPercent:{
            // how to detect whether an element is visible or not
@@ -213,9 +209,7 @@
             .filter(id => visible[parseInt(id)])
             .map(id=> parseInt(id));
         visibleIds.sort((a:number, b:number)=>{
-            const da = parseInt(a);
-            const db = parseInt(b);
-            return da < db ? -1 : (da > db ? 1 : 0);    
+            return a < b ? -1 : (a > b ? 1 : 0);    
         });
         emit('items-visible', visibleIds);
     };
