@@ -156,6 +156,9 @@
         width:100%;
         font-family: monospace, 'Courier New', Courier;
     }
+    .choices{
+        display: none;
+    }
 
     .code-container{
         border-radius: 10px;

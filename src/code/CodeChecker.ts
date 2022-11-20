@@ -45,7 +45,7 @@ class FunctionCallChecker extends Checker{
         return globals[this.checkerVarName] === this.c.returns;
     }
     getPythonCode(): string {
-        return `${this.checkerVarName} = ${this.c.code}})`
+        return `${this.checkerVarName} = ${this.c.code}`
     }
 }
 
