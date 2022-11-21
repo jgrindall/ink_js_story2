@@ -184,7 +184,7 @@
         let el = elRef.value as HTMLElement;
         const max =  el.scrollHeight - el.clientHeight;
         const progress = el.scrollTop/max;
-        emit('scroll', progress);
+        emit('progress', progress);
     };
 
     onMounted(()=>{
@@ -235,7 +235,7 @@
     };
 
     const emit = defineEmits([
-        'scroll',
+        'progress',
         'items-visible'
     ]);
 
