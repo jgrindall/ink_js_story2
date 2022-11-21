@@ -6,7 +6,9 @@
                 <div ref="code"></div>
                 <div class="codeOutput">{{codeOutput}}</div>
             </div>
-            <button class="run" :disabled="isDisabled" @click="onRun">RUN</button>
+            <van-button :loading="processing" loading-text="Running..." v-if="!isDisabled" class="run" :disabled="isDisabled" @click="onRun">
+                Run
+            </van-button>
         </div>
 
         <choices-view
@@ -26,7 +28,7 @@
     import type {PropType, Ref} from 'vue';
     import type {Code, CodeFile, CheckDefn} from "../types/types";
     import {python} from "@codemirror/lang-python"
-    import {EditorState} from "@codemirror/state"
+    import {EditorState, Transaction} from "@codemirror/state"
     import {EditorView, basicSetup} from "codemirror"
     import { myTheme } from './theme';
     import ChoicesView from './ChoicesView.vue';
@@ -37,11 +39,12 @@
     import CodeChecker from '@/code/CodeChecker';
     const codeStore = useCodeStore();
     const codeStoreRefs = storeToRefs(codeStore);
-
+    
     const uiStore = useUIStore();
     
     const code:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
     const elRef:Ref<HTMLElement | null> = ref(null);
+    const processing: Ref<boolean> = ref(false);
 
     let editorView: EditorView;
 
@@ -87,10 +90,24 @@
         }
     });
 
+    const filterDisabled = () =>{
+        return EditorState.transactionFilter.of((tr: Transaction) => {
+            if(isDisabled.value){
+                return []
+            }
+            return tr;
+        });
+    }
+
+    let changeHandler = () => {
+        return EditorView.updateListener.of((v)=> {
+            return false;
+        });
+    }
+    
     onMounted(async ()=>{
         const doc = "";
         let change = EditorView.updateListener.of((v)=> {
-            console.log(v);
             return false;
         });
 
@@ -100,7 +117,8 @@
                 basicSetup,
                 python(),
                 myTheme,
-                change   
+                changeHandler(),
+                filterDisabled()
             ]
         });
 
@@ -121,9 +139,11 @@
             codeOutput.value += "" + s + '\n';
         }, fileChecks.value);
         uiStore.setLoading(true)
+        processing.value = true;
         await checker.init();
         uiStore.setLoading(false)
         const success = await checker.check();
+        processing.value = false;
         emit('run', props.item.id, elRef.value, success);
     };
 
