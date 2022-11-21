@@ -32,9 +32,8 @@
     <down-button
         :show="!isAtEnd"
         @click="scrollToEnd"
-        >
-    </down-button>
-
+        />
+    
     <loader v-if="loading"/>
 
 </template>
