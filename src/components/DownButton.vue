@@ -1,5 +1,5 @@
 <template>
-     <button class="down" :class="{'show': show}" @click="down">
+     <button class="down" :class="{'show': show}">
         <div>
             <van-icon name="arrow-down" color="#ee0a24" size="1.5rem"/>
         </div>
@@ -10,7 +10,7 @@
 
     const props = defineProps({
         'show':{
-
+            type:Boolean
         }
     });
 
