@@ -53,9 +53,9 @@
     import type {Ref} from "vue";
     import Scroll from "@/scroll/Scroll.vue";
     import { nextTick, ref } from 'vue';
-    import fac from "@/scroll/fac";
+    import useComponentFactory from "@/scroll/componentFactory";
 
-    const { componentFactory } = fac()
+    const { componentFactory } = useComponentFactory()
     const storyStore = useStoryStore();
     const storyStoreRefs = storeToRefs(storyStore);
     const uiStore = useUIStore();

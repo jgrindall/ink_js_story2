@@ -6,7 +6,7 @@ import TextView from "../components/TextView.vue"
 import ImageView from "../components/ImageView.vue"
 import ChoicesView from "../components/ChoicesView.vue"
 
-export default function fac(){
+export default function useComponentFactory(){
 
     const components = {
         [SectionType.CODE]: CodeView,

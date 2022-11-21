@@ -31,7 +31,7 @@
     import type { Ref, PropType  } from 'vue'
     import {max, compact } from 'underscore';
     import type {HasId} from "../types/types";
-    import easyScroll from 'easy-scroll';
+    import useScrollTo from "./scrollTo"
     
     const elRef:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
     const mapIdToEntry:Ref< Record<number, Entry>> = ref({});
@@ -83,40 +83,6 @@
             interval = requestAnimationFrame(updateVisibility);
         } 
     }
-
-    /**
-     * scroll to the bottom
-     */
-    const scrollToEnd = ()=>{
-        const el = elRef.value as HTMLElement;
-        const top = el.scrollHeight - el.offsetHeight;
-        scrollToPosition(top);
-    };
-
-    /**
-     * Scroll to a specific position
-     * @param {number} top
-     */
-    const scrollToPosition = (top: number)=>{
-        const el = elRef.value as HTMLElement;
-        if(scrollingActive.value || !el){
-            // already scrolling
-            return;
-        }
-        scrollingActive.value = true;
-        easyScroll({
-            scrollableDomEle:el,
-            direction: 'bottom',
-            duration:props.scrollSpeed,
-            easingPreset: 'easeInQuad',
-            scrollAmount: top - el.scrollTop,
-            onAnimationCompleteCallback: ()=>{
-                setTimeout(()=>{
-                    scrollingActive.value = false;
-                });
-            }
-        });
-    };
 
     watchEffect(() => {
         props.items.forEach( (item:HasId) =>{
@@ -273,9 +239,15 @@
         'items-visible'
     ]);
 
+    const { scrollToEnd, scrollToPosition } = useScrollTo()
+
     defineExpose({
-        scrollToPosition,
-        scrollToEnd,
+        scrollToPosition: (top: number)=>{
+            scrollToPosition(elRef.value as HTMLElement, top, props.scrollSpeed);
+        },
+        scrollToEnd:()=>{
+            scrollToEnd(elRef.value as HTMLElement, props.scrollSpeed);
+        },
         showAll
     })
 
