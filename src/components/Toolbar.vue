@@ -4,7 +4,7 @@
 
         <template #left>
             <van-icon name="arrow-down" color="#ee0a24" size="1.5rem"/>
-            <van-button size="large" icon="arrow-up" color="#7232dd" type="primary">
+            <van-button icon="arrow-up" color="#7232dd" type="primary">
                 Primary
             </van-button>
             <button @click="saveJSON">Save</button>

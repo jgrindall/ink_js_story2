@@ -4,6 +4,8 @@
             <div class="inner">
                 <code-blobs></code-blobs>
                 <div ref="code"></div>
+                <div ref="aceEl"></div>
+                <div class="monaco" ref="monacoEl"></div>
                 <div class="codeOutput">{{codeOutput}}</div>
             </div>
             <van-button :loading="processing" loading-text="Running..." v-if="!isDisabled" class="run" :disabled="isDisabled" @click="onRun">
@@ -37,16 +39,25 @@
     import {useStore as useCodeStore} from '@/stores/Code';
     import {useStore as useUIStore} from '@/stores/UI';
     import CodeChecker from '@/code/CodeChecker';
+    import * as monaco from "monaco-editor"
+    //@ts-ignore
+    import constrainedEditor from "constrained-editor-plugin"
+
+    import ace from 'ace-builds'
+    import 'ace-builds/src-noconflict/mode-python';
+    import 'ace-builds/src-noconflict/theme-cobalt';
+
     const codeStore = useCodeStore();
-    const codeStoreRefs = storeToRefs(codeStore);
-    
+    const codeStoreRefs = storeToRefs(codeStore);    
     const uiStore = useUIStore();
-    
     const code:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
+    const aceEl:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
+    const monacoEl:Ref<HTMLElement | null> = ref<HTMLElement | null>(null);
     const elRef:Ref<HTMLElement | null> = ref(null);
     const processing: Ref<boolean> = ref(false);
 
     let editorView: EditorView;
+    let aceEditorView: ace.Ace.Editor;
 
     const codeOutput:Ref<string> = ref("");
 
@@ -87,6 +98,7 @@
                     insert: fileContents.value
                 }
             });
+            aceEditorView.setValue(fileContents.value);
         }
     });
 
@@ -101,6 +113,7 @@
 
     let changeHandler = () => {
         return EditorView.updateListener.of((v)=> {
+            console.log(v)
             return false;
         });
     }
@@ -108,6 +121,7 @@
     onMounted(async ()=>{
         const doc = "";
         let change = EditorView.updateListener.of((v)=> {
+            console.log(v);
             return false;
         });
 
@@ -127,7 +141,55 @@
             parent: code.value as HTMLElement,
             doc: doc
         });
+        
 
+        aceEditorView = ace.edit(aceEl.value as Element);
+        aceEditorView.setTheme("ace/theme/cobalt");
+        aceEditorView.session.setMode("ace/mode/python");
+        aceEditorView.setValue(doc);
+
+
+        const r = new ace.Range(0, 0, 4, 4)
+        aceEditorView.session.addMarker(r, "readonly-highlight", "fullLine", true)
+
+        aceEditorView.commands.on("exec", function(e: any) { 
+            var rowCol = aceEditorView.selection.getCursor();
+            console.log("rowCol", e, rowCol);
+            if (rowCol.row == 6) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+        });
+
+        const editorInstance = monaco.editor.create((monacoEl.value as unknown) as HTMLElement, {
+            value: [
+                'const utils = {};',
+                'function addKeysToUtils(){',
+                    '',
+                '}',
+                'addKeysToUtils();'
+            ].join('\n'),
+            language: 'javascript'
+        });
+        const model = editorInstance.getModel();
+        const constrainedInstance = constrainedEditor(monaco);
+        constrainedInstance.initializeIn(editorInstance);
+        constrainedInstance.addRestrictionsTo(model, [
+            {
+                // range : [ startLine, startColumn, endLine, endColumn ]
+                range: [1, 7, 1, 12], // Range of Util Variable name
+                label: 'utilName',
+                validate: function (currentlyTypedValue:any, newRange:any, info:any) {
+                    const noSpaceAndSpecialChars = /^[a-z0-9A-Z]*$/;
+                    return noSpaceAndSpecialChars.test(currentlyTypedValue);
+                }
+            },
+            {
+                range: [3, 1, 3, 1], // Range of Function definition
+                allowMultiline: true,
+                label: 'funcDefinition'
+            }
+        ]);
     });
 
     const onRun = async ()=>{
@@ -196,6 +258,21 @@
         box-shadow: 0 0 20px rgb(0 0 0 / 20%);
         background-color: #272822;
 
+        .ace_editor{
+            width: 33%;
+            position: absolute;
+            height: calc(100% - 30px - 120px);
+            bottom: 120px;
+            right: 0;
+        }
+        .monaco{
+            width:33%;
+            position: absolute;
+            height: calc(100% - 30px - 120px);
+            bottom: 120px;
+            right: 33%;
+        }
+
         .inner{
             position: absolute;
             top:calc($padding/2);
@@ -204,7 +281,7 @@
             right:$padding;
             >div:nth-child(2){
                 overflow-y: auto;
-                width:100%;
+                width:33%;
                 position: absolute;
                 height: calc(100% - $topHeight - $bottomHeight);
                 bottom:$bottomHeight;
@@ -237,5 +314,9 @@
         border: 1px dashed #ccc;
         background: rgba(200, 200, 200, 0.1);
         color: white;
+    }
+
+    .readonly-highlight{
+        background-color: red;
     }
 </style>
